@@ -7,5 +7,5 @@ $fh2 =  fopen('../outputs/test/MicMac-LocalChantierDescripteur.xml', 'w+');
 //writing XML string to the new file
 fwrite($fh2, $xmlC);
 //closing the file handler
-fclose($f2);
+fclose($fh2);
 ?>

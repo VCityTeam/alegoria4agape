@@ -1,4 +1,5 @@
 <?php
+header('Content-Type: application/json');
 
 $img_name = $_GET['imagename'];
 //Method to execute a command in the terminal
@@ -6,8 +7,9 @@ function terminal($command)
 {
     //system
     //add MicMac to global Path
-    $path = '/var/www/micmac/bin';
+    $path = getenv('MICMAC_BIN') ?: '/home/johnsamuel/micmac/bin';
     putenv('PATH=' . getenv('PATH') . PATH_SEPARATOR . $path);
+    $command = $command . ' 2>&1';
     if(function_exists('system'))
     {
         ob_start();
@@ -63,13 +65,13 @@ copy($path_to_data.DIRECTORY_SEPARATOR.$img_name,$path_to_output.DIRECTORY_SEPAR
 chdir($path_to_output);
 
 //MicMac command to compute image orientation based on calibration file, 2D image coordinates file, and 3D ground control points file
-$cmd = "mm3d aspro" . " " . $img_name . " " . $calib_file . " " . $gcp_file . " " . $appuis_file;
-echo $cmd ;
+$cmd = "mm3d Aspro" . " " . $img_name . " " . $calib_file . " " . $gcp_file . " " . $appuis_file;
 
 // $cmd = "mm3d Init11P " . $gcp_file . " " . $appuis_file . " Rans=[500,6]"  ;
 
 //retrieve MicMac command output and store it into an array
 $output_array = terminal($cmd);
+$output_array['command'] = $cmd;
 
 //encode the output as json
 echo json_encode($output_array);

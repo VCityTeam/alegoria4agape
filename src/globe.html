@@ -467,21 +467,16 @@
 
                 xmlhttp.onreadystatechange = function() {
                     if (this.readyState == 4 && this.status == 200) {
-                        console.log(this.responseText);
-                        /*
                         var output_array = JSON.parse(this.responseText);
-                        var output = output_array['output'];
-                        var returned_value = output_array['status'];
-                        console.log(output);
-                        if(returned_value==0){
+                        console.log(output_array.command);
+                        console.log(output_array.output);
+                        if(output_array.status == 0){
                             alert("MicMac calculations are done!");
                             window.location.href = 'oriented_images.html';
                             
                         }else{
                             alert("MicMac failed to calculate orientation, for more info press on F12");
                         }
-                        */
-                        window.open('globe.html?imgname=' + imgName);/*oriented_images*/
                     }
                 };
 
@@ -501,9 +496,14 @@
 
                 xmlhttp.onreadystatechange = function() {
                     if (this.readyState == 4 && this.status == 200) {
-                        console.log(this.responseText);
-                        // arrayImages.unshift(  {image: imgName, distance: 100, opacity: 1, plane:null} );
-                        if(show) showResection();
+                        var output_array = JSON.parse(this.responseText);
+                        console.log(output_array.command);
+                        console.log(output_array.output);
+                        if(output_array.status == 0){
+                            if(show) showResection();
+                        }else{
+                            alert("MicMac failed to calculate orientation, for more info press on F12");
+                        }
                     }
                 };
                 xmlhttp.open("GET", "launchMicMac.php" +"?"+ "imagename=" + imgName, true);

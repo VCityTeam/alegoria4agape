@@ -1,20 +1,27 @@
-# Notes on the tools of semi-automatic registration of images and visualisation
+# alegoria4agape
+
+This repository supports the **AGAPE** project and is based on the previous
+**Alegoria** project from [`itownsResearch/alegoria`](https://github.com/itownsResearch/alegoria).
+The name **alegoria4agape** reflects that relationship: this project makes use
+of Alegoria's tools and code as a foundation for AGAPE.
+
+## Notes on the tools of semi-automatic registration of images and visualisation
 
 ![alt text](https://raw.githubusercontent.com/itownsResearch/docs/master/oldProj2.gif "Alegoria")
 
 ## Installation
 
-The alegoria Web Tools use iTowns as a submodule so in order to get the sources and the builts:
+The alegoria4agape Web Tools use iTowns as a submodule so in order to get the sources and the builts:
 
 ```
-git clone --recursive https://github.com/itownsResearch/alegoria
+git clone --recursive https://github.com/VCityTeam/alegoria4agape
 ```
 
 You're done!
 Now launch your favorite http-server (you'll need php for the semi-automatic registration tool) and access the demo here
 
-- http://localhost/alegoria/src/oriented_images.html   (visualization of oriented images)
-- http://localhost/alegoria/src/globe.html             (semi-automatic registration tool)
+- http://localhost/alegoria4agape/src/oriented_images.html   (visualization of oriented images)
+- http://localhost/alegoria4agape/src/globe.html             (semi-automatic registration tool)
 
 ### Notes for micmac with globe.html
 - On Linux, beware that in order to create the different files (ground point etc) you will need to specify write authorization. You can set an authorization recursive for the all alegoria directory like chmod -R 777 alegoria/
@@ -71,4 +78,3 @@ Les images elles-mêmes sont dans Mouna_partie_itowns\data
 
 
 Dans le menu Oriented Image il est possible de faire varier la distance et l'opacité de l'image recalée
-
