@@ -25,9 +25,9 @@ Now launch your favorite http-server (you'll need php for the semi-automatic reg
 
 ### Notes for micmac with globe.html
 - On Linux, beware that in order to create the different files (ground point etc) you will need to specify write authorization. You can set an authorization recursive for the all alegoria directory like chmod -R 777 alegoria/
-- Check the launchMicMac.php to verify that it can find micmac and your images (micmac inputs around line 47). You might add a path to micmac bin like this at the beginning of the function terminal
+- Check the launchMicMac.php to verify that it can find micmac4agape and your images (micmac inputs around line 47). You might add a path to micmac4agape bin like this at the beginning of the function terminal
     //add MicMac to global Path
-    $path = '/home/myusername/micmac/bin';
+    $path = '/home/myusername/micmac4agape/bin';
     putenv('PATH=' . getenv('PATH') . PATH_SEPARATOR . $path);
 
 ## SAISIE
