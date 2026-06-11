@@ -23,6 +23,62 @@ Now launch your favorite http-server (you'll need php for the semi-automatic reg
 - http://localhost/alegoria4agape/src/oriented_images.html   (visualization of oriented images)
 - http://localhost/alegoria4agape/src/globe.html             (semi-automatic registration tool)
 
+## Docker
+
+This Docker setup builds a complete runtime for
+[`VCityTeam/alegoria4agape`](https://github.com/VCityTeam/alegoria4agape) with
+[`VCityTeam/micmac4agape`](https://github.com/VCityTeam/micmac4agape).
+
+The Dockerfile uses a multi-stage build:
+
+1. Clone `VCityTeam/alegoria4agape` recursively, including the iTowns submodule.
+2. Clone and compile `VCityTeam/micmac4agape`.
+3. Copy both into a PHP/Apache runtime image.
+4. Configure PHP for image uploads and long-running MicMac requests.
+
+The application source is not copied from the local checkout during the image
+build. Docker fetches it from `ALEGORIA_REPOSITORY` with `git clone
+--recursive`, and MicMac from `MICMAC_REPOSITORY`.
+
+Build and run the web tool from this repository:
+
+```
+docker compose up --build
+```
+
+Then open:
+
+- http://localhost:8080/alegoria4agape/src/oriented_images.html
+- http://localhost:8080/alegoria4agape/src/globe.html
+
+The container serves the PHP application with Apache and sets:
+
+```
+MICMAC_BIN=/opt/micmac4agape/bin
+```
+
+`data/` and `outputs/` are stored in Docker named volumes by default. Docker
+initializes those volumes from the image content the first time they are
+created, and MicMac results remain available across container restarts.
+
+The default build uses:
+
+```
+ALEGORIA_REPOSITORY=https://github.com/VCityTeam/alegoria4agape.git
+MICMAC_REPOSITORY=https://github.com/VCityTeam/micmac4agape.git
+MICMAC_BUILD_PARALLEL=4
+```
+
+You can build against another Alegoria or MicMac fork by changing the repository
+arguments in `docker-compose.yml` or by overriding them manually:
+
+```
+docker compose build \
+  --build-arg ALEGORIA_REPOSITORY=https://github.com/VCityTeam/alegoria4agape.git \
+  --build-arg MICMAC_REPOSITORY=https://github.com/VCityTeam/micmac4agape.git \
+  --build-arg MICMAC_BUILD_PARALLEL=4
+```
+
 ### Notes for micmac with globe.html
 - On Linux, beware that in order to create the different files (ground point etc) you will need to specify write authorization. You can set an authorization recursive for the all alegoria directory like chmod -R 777 alegoria/
 - Check the launchMicMac.php to verify that it can find micmac4agape and your images (micmac inputs around line 47). You might add a path to micmac4agape bin like this at the beginning of the function terminal

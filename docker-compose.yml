@@ -1,0 +1,21 @@
+services:
+  alegoria4agape:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        ALEGORIA_REPOSITORY: https://github.com/VCityTeam/alegoria4agape.git
+        MICMAC_REPOSITORY: https://github.com/VCityTeam/micmac4agape.git
+        MICMAC_BUILD_PARALLEL: 4
+    image: alegoria4agape:local
+    ports:
+      - "8080:80"
+    volumes:
+      - alegoria-data:/var/www/html/alegoria4agape/data
+      - alegoria-outputs:/var/www/html/alegoria4agape/outputs
+    environment:
+      MICMAC_BIN: /opt/micmac4agape/bin
+
+volumes:
+  alegoria-data:
+  alegoria-outputs:

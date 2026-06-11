@@ -1,0 +1,14 @@
+.git
+.agents
+.codex
+node_modules
+itowns-photogrammetric-camera/.git
+itowns-photogrammetric-camera/node_modules
+itowns-photogrammetric-camera/build
+
+*.log
+.DS_Store
+
+outputs/test/MM-Error-*.txt
+outputs/test/TestOpenMM*
+Dockerfile.dockerignore
