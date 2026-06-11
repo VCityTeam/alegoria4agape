@@ -49,6 +49,22 @@
                 font-size: 12px;
                 bottom: 0;
             }
+            .buttonSecondary {
+                background-color: #455a64;
+            }
+            .buttonX:disabled {
+                background-color: #8a8a8a;
+                cursor: not-allowed;
+            }
+            #pickStatus {
+                color: #111;
+                background: rgba(255, 255, 255, 0.9);
+                border: 1px solid #333;
+                border-radius: 4px;
+                display: inline-block;
+                margin: 0 0 0 6px;
+                padding: 3px 6px;
+            }
             p { background-color:#FFFFFF; 
                 color: black;
             }
@@ -90,6 +106,8 @@
             <input type="file" name="files[]" multiple>
             <input type="submit" value="Upload File" name="submit">
             <p  class="imageholder" id="countPoints"> Points registered: 0</p>
+            <button class="buttonX buttonSecondary" id="undoLastPoint" type="button" onclick="undoLastPickedPoint()" disabled title="Undo last picked 3D/2D point (Ctrl+Z)">Undo</button>
+            <span id="pickStatus">Alt+click 3D point, Shift+click image point</span>
             <button class="buttonX" type="button" onclick="computeResection(event, getCurrentImageName(), true)">Go</button>
         </form>
 
@@ -196,6 +214,7 @@
 
             //3D point number
             var ptname = 0;
+            var picked3DMarkers = [];
 
             // Add one imagery layer to the scene
             // This layer is defined in a json file but it could be defined as a plain js
@@ -264,8 +283,15 @@
             scaler = function update(/* dt */) {
                 var i;
                 var mesh;
+                var markerRing;
                 if (meshes.length) {
                     view.notifyChange(view.camera.camera3D, true);
+                }
+                for (i = 0; i < picked3DMarkers.length; i++) {
+                    markerRing = picked3DMarkers[i].userData.ring;
+                    if (markerRing) {
+                        markerRing.lookAt(view.camera.camera3D.position);
+                    }
                 }
                 for (i = 0; i < meshes.length; i++) {
                     mesh = meshes[i];
@@ -352,6 +378,12 @@
                 //updateScaleWidget();
                 // get 3D coordinates on mouse click
                 window.addEventListener('mousedown', pickPosition, false);
+                window.addEventListener('keydown', function(event) {
+                    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+                        event.preventDefault();
+                        undoLastPickedPoint();
+                    }
+                }, false);
                 function pickPosition(event) {
                   
                     if(event.altKey){
@@ -375,9 +407,11 @@
                             x = pickBuilding.x, y = pickBuilding.y, z = pickBuilding.z;
                         }
                             
-                        show3DPicking(x,y,z, ptname);
+                        var marker = show3DPicking(x,y,z, ptname);
+                        picked3DMarkers.push(marker);
                         // export 3D coordinates to an xml file
                         export3Dcoord(ptname,x,y,z);
+                        updatePointCounter();
                         console.log("Nb of points picked: ", ptname);
 
                         // Launch computation after at least 7 matched points
@@ -402,6 +436,45 @@
                     }
                 }
                 return p3D;
+            }
+
+            function updatePointCounter() {
+                document.getElementById('countPoints').innerHTML = "Points registered: " + ptname;
+                document.getElementById('undoLastPoint').disabled = ptname < 1;
+            }
+
+            function undoLastPickedPoint() {
+                if (ptname < 1) {
+                    return;
+                }
+
+                var marker = picked3DMarkers.pop();
+                if (marker) {
+                    view.scene.remove(marker);
+                    disposeObject(marker);
+                }
+
+                undoLast3DCoord();
+                if (typeof undoLast2DCoord === 'function') {
+                    undoLast2DCoord(ptname);
+                }
+                ptname -= 1;
+                updatePointCounter();
+                view.notifyChange(view.camera.camera3D);
+            }
+
+            function disposeObject(object) {
+                object.traverse(function(child) {
+                    if (child.geometry) {
+                        child.geometry.dispose();
+                    }
+                    if (child.material) {
+                        if (child.material.map) {
+                            child.material.map.dispose();
+                        }
+                        child.material.dispose();
+                    }
+                });
             }
 
 
@@ -476,14 +549,61 @@
             // Draw a sphere to show where the 3D picking has been done
             function show3DPicking(x,y,z, iteration){
 
-                var geometry = new itowns.THREE.SphereGeometry( 0.1, 16, 16 );
-                var col = new itowns.THREE.Color(0XFFFF00);
-                var material = new itowns.THREE.MeshBasicMaterial( {color: col.lerpHSL(new itowns.THREE.Color(0XFF0000), (iteration % 8) / 7), transparent:true, opacity:0.8} );
+                var group = new itowns.THREE.Group();
+                var color = new itowns.THREE.Color(0XFF3B30);
+                var highlight = new itowns.THREE.Color(0XFFE066);
+
+                var geometry = new itowns.THREE.SphereGeometry( 2.5, 24, 24 );
+                var material = new itowns.THREE.MeshBasicMaterial( {color: color, depthTest:false, depthWrite:false} );
                 var sphere = new itowns.THREE.Mesh( geometry, material );
-                sphere.position.set(x,y,z); //console.log(sphere.position);
-                sphere.updateMatrixWorld();
-                view.scene.add( sphere );
-                view.notifyChange();
+                sphere.renderOrder = 999;
+                group.add(sphere);
+
+                var ringGeometry = new itowns.THREE.TorusGeometry(4.5, 0.35, 10, 48);
+                var ringMaterial = new itowns.THREE.MeshBasicMaterial({color: highlight, depthTest:false, depthWrite:false});
+                var ring = new itowns.THREE.Mesh(ringGeometry, ringMaterial);
+                ring.lookAt(view.camera.camera3D.position);
+                ring.renderOrder = 1000;
+                group.userData.ring = ring;
+                group.add(ring);
+
+                var label = createPickLabel(iteration);
+                label.position.set(0, 0, 6);
+                group.add(label);
+
+                group.position.set(x,y,z);
+                group.updateMatrixWorld();
+                group.renderOrder = 999;
+                view.scene.add( group );
+                view.notifyChange(view.camera.camera3D);
+                return group;
+            }
+
+            function createPickLabel(iteration) {
+                var canvas = document.createElement('canvas');
+                canvas.width = 96;
+                canvas.height = 96;
+                var context = canvas.getContext('2d');
+                context.fillStyle = '#ff3b30';
+                context.beginPath();
+                context.arc(48, 48, 34, 0, Math.PI * 2);
+                context.fill();
+                context.lineWidth = 6;
+                context.strokeStyle = '#ffe066';
+                context.stroke();
+                context.font = 'bold 38px Arial';
+                context.textAlign = 'center';
+                context.textBaseline = 'middle';
+                context.fillStyle = '#ffffff';
+                context.fillText(iteration, 48, 50);
+
+                var texture = new itowns.THREE.Texture(canvas);
+                texture.needsUpdate = true;
+                var material = new itowns.THREE.SpriteMaterial({map: texture, depthTest:false, depthWrite:false});
+                var sprite = new itowns.THREE.Sprite(material);
+                sprite.scale.set(12, 12, 1);
+                sprite.renderOrder = 1001;
+                return sprite;
             }
 
 

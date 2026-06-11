@@ -10,10 +10,15 @@
 var i;
 var div, image, image_width, image_height, image_rendwidth, image_rendheight, image_offsetLeft, image_offsetTop;
 var xmlDoc, element1;
+var imagePointMarkers = [];
 
 
 function initXML2D(){
     i = 0;
+    imagePointMarkers.forEach(function(marker) {
+        removeDomNode(marker);
+    });
+    imagePointMarkers = [];
     //store image parameters
     image = document.getElementById("img");
     div = document.getElementById("miniDiv");
@@ -60,6 +65,7 @@ function getImgCoordOnClick(event){
         point.setAttribute('src', "../data/cross.png");
         point.setAttribute('style',"position:absolute;visibility:hidden;z-index:20;width:10px;height:10px");
         document.body.appendChild(point);
+        imagePointMarkers.push(point);
      //   miniDiv.appendChild(point);
      //  miniDiv.insertBefore(point, img);
         //get center of the cross
@@ -80,27 +86,56 @@ function getImgCoordOnClick(event){
         subElement2.appendChild(subElement3);
         subElement2.appendChild(subElement4);
 
-        // creating XMLhttpRequest object
-        var xhr;
-        if (window.XMLHttpRequest) { // Mozilla, Safari, ...
-            xhr = new XMLHttpRequest();
-        } else if (window.ActiveXObject) { // IE 8 and older
-            xhr = new ActiveXObject("Microsoft.XMLHTTP");
-        }
-
-        //php script to write the xml file
-        var url = "fetch2dcoord.php";
-
-        //open a connection to the server
-        xhr.open("POST", url, true);
-
-        //declaring that the data being sent is in XML format
-        xhr.setRequestHeader("Content-Type", "text/xml");
-
-        //send the request
-        xhr.send(xmlDoc);
+        post2DCoordXML();
     }
     
 }
 
+function undoLast2DCoord(pointName) {
+    if (!element1 || !element1.lastElementChild) {
+        return;
+    }
 
+    var lastPointName = element1.lastElementChild.querySelector('NamePt');
+    if (!lastPointName || Number(lastPointName.textContent) !== Number(pointName)) {
+        return;
+    }
+
+    element1.removeChild(element1.lastElementChild);
+    i = Math.max(0, i - 1);
+
+    var marker = imagePointMarkers.pop();
+    if (marker) {
+        removeDomNode(marker);
+    }
+
+    post2DCoordXML();
+}
+
+function post2DCoordXML() {
+    // creating XMLhttpRequest object
+    var xhr;
+    if (window.XMLHttpRequest) { // Mozilla, Safari, ...
+        xhr = new XMLHttpRequest();
+    } else if (window.ActiveXObject) { // IE 8 and older
+        xhr = new ActiveXObject("Microsoft.XMLHTTP");
+    }
+
+    //php script to write the xml file
+    var url = "fetch2dcoord.php";
+
+    //open a connection to the server
+    xhr.open("POST", url, true);
+
+    //declaring that the data being sent is in XML format
+    xhr.setRequestHeader("Content-Type", "text/xml");
+
+    //send the request
+    xhr.send(xmlDoc);
+}
+
+function removeDomNode(node) {
+    if (node && node.parentNode) {
+        node.parentNode.removeChild(node);
+    }
+}

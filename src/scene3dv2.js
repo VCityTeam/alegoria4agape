@@ -38,15 +38,28 @@ function export3Dcoord(ptname,x,y,z) {
     var subelement1 = xmlDoc2.createElement('Pt');
     subelement1.textContent = x + " " + y + " " + z;
     element1.appendChild(subelement1);
-    subelement2 = xmlDoc2.createElement('NamePt');
+    var subelement2 = xmlDoc2.createElement('NamePt');
     subelement2.textContent = ptname;
     element1.appendChild(subelement2);
-    subelement3 = xmlDoc2.createElement('Incertitude');
+    var subelement3 = xmlDoc2.createElement('Incertitude');
     subelement3.textContent = 1 + " " + 1 + " " + 1;
     element1.appendChild(subelement3);
 
     console.log(x,y,z);
 
+    post3DCoordXML();
+         
+}
+
+function undoLast3DCoord() {
+    if (!dico || !dico.lastElementChild) {
+        return;
+    }
+    dico.removeChild(dico.lastElementChild);
+    post3DCoordXML();
+}
+
+function post3DCoordXML() {
     //creating XMLhttpRequest object
     var xhr2;
     if (window.XMLHttpRequest) { // Mozilla, Safari, ...
@@ -65,5 +78,4 @@ function export3Dcoord(ptname,x,y,z) {
 
     //send the request
     xhr2.send(xmlDoc2);
-         
 }
