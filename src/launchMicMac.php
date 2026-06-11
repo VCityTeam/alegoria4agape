@@ -12,7 +12,7 @@ function terminal($command)
 {
     //system
     //add MicMac to global Path
-    $path = getenv('MICMAC_BIN') ?: realpath(__DIR__ . '/../../micmac/bin');
+    $path = getenv('MICMAC_BIN') ?: realpath(__DIR__ . '/../../micmac4agape/bin');
     putenv('PATH=' . getenv('PATH') . PATH_SEPARATOR . $path);
     $command = $command . ' 2>&1';
     if(function_exists('system'))
