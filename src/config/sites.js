@@ -43,6 +43,7 @@
                 label: 'Paris',
                 dataPath: '../data/',
                 outputPath: '../outputs/test/',
+                enableBuildings: true,
                 positionOnGlobe: { longitude: 2.3186303566461626, latitude: 48.86426741804917, altitude: 1878.615379151888 },
                 zones: {
                     default: {
@@ -56,6 +57,7 @@
                 label: 'Lyon',
                 dataPath: '../data/',
                 outputPath: '../outputs/test/',
+                enableBuildings: false,
                 positionOnGlobe: { longitude: 4.835659, latitude: 45.764043, altitude: 1878.615379151888 },
                 zones: {
                     default: {
@@ -104,7 +106,8 @@
             images: cloneImages(images || []),
             positionOnGlobe: Object.assign({}, zone.positionOnGlobe || city.positionOnGlobe),
             dataPath: zone.dataPath || city.dataPath || '../data/',
-            outputPath: zone.outputPath || city.outputPath || '../outputs/test/'
+            outputPath: zone.outputPath || city.outputPath || '../outputs/test/',
+            enableBuildings: zone.enableBuildings !== undefined ? zone.enableBuildings : city.enableBuildings !== false
         };
     };
 }());

@@ -65,6 +65,18 @@
                 margin: 0 0 0 6px;
                 padding: 3px 6px;
             }
+            #viewerStatus {
+                color: #111;
+                background: rgba(255, 255, 255, 0.92);
+                border: 1px solid #333;
+                border-radius: 4px;
+                left: 12px;
+                max-width: 460px;
+                padding: 6px 8px;
+                position: absolute;
+                top: 12px;
+                z-index: 1000;
+            }
             p { background-color:#FFFFFF; 
                 color: black;
             }
@@ -93,6 +105,7 @@
            
 
         <div id="viewerDiv">
+                <div id="viewerStatus" style="display:none"></div>
                 <p id="info">
                         <img id="imgLogo" src="../data/logoAlegoria.jpg" onmousedown="getImgCoordOnClick(event)">
                         <br> 
@@ -301,34 +314,36 @@
             registerPickingHandlers();
 
 
-            var wfsBuildingSource = new itowns.WFSSource({
-                url: 'https://data.geopf.fr/wfs/ows?',
-                version: '2.0.0',
-                typeName: 'BDTOPO_V3:batiment',
-                projection: 'EPSG:4326',
-                ipr: 'IGN',
-                format: 'application/json',
-                zoom: { min: 15, max: 15 },
-              
-            });
+            if (siteConfig.enableBuildings) {
+                var wfsBuildingSource = new itowns.WFSSource({
+                    url: 'https://data.geopf.fr/wfs/ows?',
+                    version: '2.0.0',
+                    typeName: 'BDTOPO_V3:batiment',
+                    projection: 'EPSG:4326',
+                    ipr: 'IGN',
+                    format: 'application/json',
+                    zoom: { min: 15, max: 15 },
 
-            var wfsBuildingLayer = new itowns.GeometryLayer('WFS Building', new itowns.THREE.Group(), {
-                update: itowns.FeatureProcessing.update,
-                convert: itowns.Feature2Mesh.convert({
-                    color: colorBuildings,
-                    batchId: function (property, featureId) { return featureId; },
-                    altitude: altitudeBuildings,
-                    extrude: extrudeBuildings }),
-                onMeshCreated: function scaleZ(mesh) {
-                    mesh.scale.z = 0.01;
-                    meshes.push(mesh);
-                    meshesForeverever.push(mesh);
-                },
-                filter: acceptFeature,
-                overrideAltitudeInToZero: true,
-                source: wfsBuildingSource
-            });
-            view.addLayer(wfsBuildingLayer);
+                });
+
+                var wfsBuildingLayer = new itowns.GeometryLayer('WFS Building', new itowns.THREE.Group(), {
+                    update: itowns.FeatureProcessing.update,
+                    convert: itowns.Feature2Mesh.convert({
+                        color: colorBuildings,
+                        batchId: function (property, featureId) { return featureId; },
+                        altitude: altitudeBuildings,
+                        extrude: extrudeBuildings }),
+                    onMeshCreated: function scaleZ(mesh) {
+                        mesh.scale.z = 0.01;
+                        meshes.push(mesh);
+                        meshesForeverever.push(mesh);
+                    },
+                    filter: acceptFeature,
+                    overrideAltitudeInToZero: true,
+                    source: wfsBuildingSource
+                });
+                view.addLayer(wfsBuildingLayer);
+            }
 
             
 /*
@@ -450,6 +465,9 @@
 
             // Picking on buildings
             function pickingBuildings(event) {
+                if (!siteConfig.enableBuildings) {
+                    return null;
+                }
                 if(view.controls.isPaused()) {
                     var intersects = [];
                     try {
@@ -723,37 +741,51 @@
                 params.set('zone', siteConfig.zoneKey);
                 return params.toString();
             }
-            
 
-            // Show oriented image using micmac aspro xml
-            function showResection(){
+            function setViewerStatus(message, isError) {
+                var status = document.getElementById('viewerStatus');
+                if (!status) {
+                    return;
+                }
+                if (!message) {
+                    status.style.display = 'none';
+                    status.textContent = '';
+                    return;
+                }
+                status.style.display = 'block';
+                status.style.borderColor = isError ? '#b00020' : '#333';
+                status.textContent = message;
+            }
+
+            function loadOrientationForCurrentImage() {
                 if (!arrayImages.length) {
+                    setViewerStatus('No registered image is configured for this city.', true);
                     console.warn('No registered image is configured for this city.');
                     return;
                 }
-                
-                // fetch orientation file
+
+                var imageName = arrayImages[currentIndiceNav].image;
                 var source = new FetchSource(outputPath);
-                // parse micmac orientation
-                source.open('Ori-Aspro/Orientation-' + arrayImages[currentIndiceNav].image + '.xml', 'text') // change orientation file each time you change the picture!
+                setViewerStatus('Loading orientation for ' + imageName + '...', false);
+                source.open('Ori-Aspro/Orientation-' + imageName + '.xml', 'text')
                     .then(data => MicmacOrientationParser.parse(data, source))
-                    .then(handleOrientation);
+                    .then(handleOrientation)
+                    .catch(function(error) {
+                        setViewerStatus('Could not load orientation for ' + imageName + '. See console for details.', true);
+                        console.error('Could not load orientation for ' + imageName, error);
+                    });
+            }
+
+
+            // Show oriented image using micmac aspro xml
+            function showResection(){
+                loadOrientationForCurrentImage();
             }
 
             
             // Show oriented image using micmac aspro xml
             function previewResection(){
-                if (!arrayImages.length) {
-                    console.warn('No registered image is configured for this city.');
-                    return;
-                }
-                
-                // fetch orientation file
-                var source = new FetchSource(outputPath);
-                // parse micmac orientation
-                source.open('Ori-Aspro/Orientation-' + arrayImages[currentIndiceNav].image + '.xml', 'text') // change orientation file each time you change the picture!
-                    .then(data => MicmacOrientationParser.parse(data, source))
-                    .then(handleOrientation);
+                loadOrientationForCurrentImage();
             }
 
 
@@ -820,6 +852,7 @@
             // function to handle micmac orientation file
             function handleOrientation(cam) {
                 console.log(cam);
+                setViewerStatus('Orientation loaded. Camera center: ' + cam.position.x.toFixed(2) + ', ' + cam.position.y.toFixed(2) + ', ' + cam.position.z.toFixed(2), false);
                 // Ugly way, if currently shown and refine orientation we remove oriented cam and recreate all...
                 if(currentOrientationWorkedImage == currentImageName){
                     view.scene.remove(globalCurrentCamOriented);
@@ -864,6 +897,9 @@
                 textureMaterial.map = new itowns.THREE.TextureLoader().load(dataPath + pictureInfos.image);
                 textureMaterial.transparent = true;
                 updateCamera();
+                setTimeout(function() {
+                    setViewerStatus('', false);
+                }, 3000);
 
                 view.camera.camera3D.updateProjectionMatrix();
 /*
@@ -887,12 +923,7 @@
 
             // If no initial position passed in the URL we launch the first registered image
             if(! posInit && arrayImages.length){
-                // fetch orientation file
-                var source = new FetchSource(outputPath);
-                // parse micmac orientation
-                source.open('Ori-Aspro/Orientation-' + arrayImages[currentIndiceNav].image + '.xml', 'text') // change orientation file each time you change the picture!
-                    .then(data => MicmacOrientationParser.parse(data, source))
-                    .then(handleOrientation);
+                loadOrientationForCurrentImage();
             }
 
             function updatePlaneDistance(value) {
@@ -1015,9 +1046,7 @@
                 currentIndiceNav = (currentIndiceNav + 1) % arrayImages.length; console.log("currentIndiceNav ",currentIndiceNav);
                 console.log('indice image: ', currentIndiceNav);
 
-                source.open('Ori-Aspro/Orientation-' + arrayImages[currentIndiceNav].image + '.xml', 'text') // change orientation file each time you change the picture!
-                .then(data => MicmacOrientationParser.parse(data, source))
-                .then(handleOrientation);
+                loadOrientationForCurrentImage();
                 //view.notifyChange();
             }
             
@@ -1081,6 +1110,9 @@
 
                     // when oriented image layer is ready..
                     view.addLayer(olayer, view.tileLayer).then(function addWfsLayer(orientedImageLayer) {
+                        if (!siteConfig.enableBuildings) {
+                            return;
+                        }
                     
                         // prepare WFS source for the buildings
                         var wfsBuildingSource = new itowns.WFSSource({

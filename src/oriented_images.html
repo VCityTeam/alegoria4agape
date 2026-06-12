@@ -16,6 +16,18 @@
                 font-family: Arial, Helvetica, sans-serif;
                 font-size: 11px;
             }
+            #viewerStatus {
+                color: #111;
+                background: rgba(255, 255, 255, 0.92);
+                border: 1px solid #333;
+                border-radius: 4px;
+                left: 12px;
+                max-width: 460px;
+                padding: 6px 8px;
+                position: absolute;
+                top: 12px;
+                z-index: 1000;
+            }
         </style>
         <meta charset="UTF-8">
         <link rel="icon" href="../data/logoAlegoria.jpg">
@@ -26,6 +38,7 @@
     </head>
     <body>
         <div id="viewerDiv">
+            <div id="viewerStatus" style="display:none"></div>
             <p id="info">
                 <img id="img" src="../data/logoAlegoria.jpg" onmousedown="getImgCoordOnClick(event)">
                 <br> 
@@ -303,6 +316,7 @@
             function handleOrientation(cam) {
                 
                 view.camera._preSSE = 12000;  // Weird but needed to keep good tile resolution
+                setViewerStatus('Orientation loaded. Camera center: ' + cam.position.x.toFixed(2) + ', ' + cam.position.y.toFixed(2) + ', ' + cam.position.z.toFixed(2), false);
                 //console.log(cam);
                 //console.log(returnExistingCamImage(cam));
                 arrDisplayedImages.push(cam);
@@ -371,6 +385,9 @@
                 // open view camera FOV of 10° to see landscape around the picture.
                 //   view.camera.camera3D.fov += 10;
                 view.camera.camera3D.updateProjectionMatrix();
+                setTimeout(function() {
+                    setViewerStatus('', false);
+                }, 3000);
                // console.log(view.camera.camera3D);
 
                 //        view.camera.camera3D = cam;
@@ -395,6 +412,21 @@
             var source = new FetchSource(outputPath);
             loadInitialOrientation();
 
+            function setViewerStatus(message, isError) {
+                var status = document.getElementById('viewerStatus');
+                if (!status) {
+                    return;
+                }
+                if (!message) {
+                    status.style.display = 'none';
+                    status.textContent = '';
+                    return;
+                }
+                status.style.display = 'block';
+                status.style.borderColor = isError ? '#b00020' : '#333';
+                status.textContent = message;
+            }
+
             function loadInitialOrientation() {
                 if (arrayImages.length) {
                     loadCurrentOrientation();
@@ -403,6 +435,7 @@
 
                 fetchLatestOrientedImage().then(function(imgName) {
                     if (!imgName) {
+                        setViewerStatus('No registered image is configured for this city.', true);
                         console.warn('No registered image is configured for this city.');
                         return;
                     }
@@ -413,10 +446,16 @@
             }
 
             function loadCurrentOrientation() {
+                var imageName = arrayImages[currentIndiceNav].image;
+                setViewerStatus('Loading orientation for ' + imageName + '...', false);
                 // parse micmac orientation
-                source.open('Ori-Aspro/Orientation-' + arrayImages[currentIndiceNav].image + '.xml', 'text') // change orientation file each time you change the picture!
+                source.open('Ori-Aspro/Orientation-' + imageName + '.xml', 'text') // change orientation file each time you change the picture!
                     .then(data => MicmacOrientationParser.parse(data, source))
-                    .then(handleOrientation);
+                    .then(handleOrientation)
+                    .catch(function(error) {
+                        setViewerStatus('Could not load orientation for ' + imageName + '. See console for details.', true);
+                        console.error('Could not load orientation for ' + imageName, error);
+                    });
             }
 
             function fetchLatestOrientedImage() {
