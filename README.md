@@ -22,6 +22,8 @@ Now launch your favorite http-server (you'll need php for the semi-automatic reg
 
 - http://localhost/alegoria4agape/src/oriented_images.html   (visualization of oriented images)
 - http://localhost/alegoria4agape/src/globe.html             (semi-automatic registration tool)
+- http://localhost/alegoria4agape/src/lyon/oriented_images.html
+- http://localhost/alegoria4agape/src/lyon/globe.html
 
 ## Docker
 
@@ -50,6 +52,34 @@ Then open:
 
 - http://localhost:8080/alegoria4agape/src/oriented_images.html
 - http://localhost:8080/alegoria4agape/src/globe.html
+- http://localhost:8080/alegoria4agape/src/lyon/oriented_images.html
+- http://localhost:8080/alegoria4agape/src/lyon/globe.html
+
+## City, quartier, and zone configuration
+
+City-specific entry points live under `src/<city>/`. Lyon currently has:
+
+- `src/lyon/oriented_images.html`
+- `src/lyon/globe.html`
+
+Both entry points reuse the shared pages in `src/oriented_images.html` and
+`src/globe.html`. The city, quartier, and zone data is centralized in
+`src/config/sites.js`.
+
+To add a new city or zone:
+
+1. Add the city under `ALEGORIA_SITES.cities` in `src/config/sites.js`.
+2. Add one or more `zones` with `positionOnGlobe`, `orientedImages`, and
+   `globeImages`.
+3. Optionally create `src/<city>/oriented_images.html` and
+   `src/<city>/globe.html` redirect files like the Lyon ones.
+
+You can also open a configured zone directly:
+
+```
+http://localhost:8080/alegoria4agape/src/globe.html?city=lyon&zone=default
+http://localhost:8080/alegoria4agape/src/oriented_images.html?city=lyon&quartier=default
+```
 
 The container serves the PHP application with Apache and sets:
 

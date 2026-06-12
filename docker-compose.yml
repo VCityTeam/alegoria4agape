@@ -11,6 +11,7 @@ services:
     ports:
       - "8080:80"
     volumes:
+      - ./src:/var/www/html/alegoria4agape/src
       - alegoria-data:/var/www/html/alegoria4agape/data
       - alegoria-outputs:/var/www/html/alegoria4agape/outputs
     environment:
