@@ -79,12 +79,14 @@
             
         </style>
         <meta charset="UTF-8">
+        <link rel="icon" href="../data/logoAlegoria.jpg">
         <link rel="stylesheet" type="text/css" href="../itowns-photogrammetric-camera/examples/css/example.css">
         <link rel="stylesheet" type="text/css" href="../itowns-photogrammetric-camera/examples/css/loading_screen.css">
         <link rel="stylesheet" type="text/css" href="scene2d.css">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="../itowns-photogrammetric-camera/examples/js/GUI/dat.gui/dat.gui.min.js"></script>
         <script src="../itowns-photogrammetric-camera/examples/js/OrientedImageHelper.js"></script>
+        <script src="config/sites.js"></script>
         
     </head>
     <body>
@@ -132,6 +134,9 @@
             var THREE = itowns.THREE;
 
             // Get possible parameters from url like imagename
+            var siteConfig = getAlegoriaSiteConfig('globe');
+            var dataPath = siteConfig.dataPath;
+            var outputPath = siteConfig.outputPath;
             var urlpage = new URL(location);
             var imName = urlpage.searchParams.get("imgname");
             var posInit = urlpage.searchParams.get("pos");
@@ -168,21 +173,7 @@
             var model; // 3D model loaded
 
             // Alex modifications to handle multiple images
-            var arrayImages = [];
-            arrayImages = [{image: 'LOC-04753X.jpg', distance: 200, opacity: 1, plane:null},
-            {image: 'notredame.jpg', distance: 200, opacity: 1, plane:null},
-            {image: 'rueVieilleDuTemple8.jpg', distance: 600, opacity: 1, plane:null},
-            {image: 'planNotreDame.jpg', distance: 200, opacity: 1, plane:null},
-            {image: 'plandetailleCite.jpg', distance: 200, opacity: 1, plane:null},
-            {image: 'pontlouisphilippe.jpg', distance: 200, opacity: 1, plane:null},
-            {image: '1919_CAF_C-1_0012.jpg', distance: 200, opacity: 1, plane:null}, 
-            {image: '1951_DUR_208_0007.jpg', distance: 200, opacity: 1, plane:null},
-            {image: '1951_DUR_214_0024.jpg', distance: 200, opacity: 1, plane:null}, 
-            {image: '1951_DUR_214_0022.jpg', distance: 200, opacity: 1, plane:null},
-            {image: '1919_CAF_Z-36_0008.jpg', distance: 200, opacity: 1, plane:null},
-            {image: 'trocadero2.jpg', distance: 200, opacity: 1, plane:null},
-            {image: 'FRAN_0207_3299_L.jpg', distance: 200, opacity: 1, plane:null},
-            {image: 'FRAN_0207_0648_L.jpg', distance: 200, opacity: 1, plane:null}];
+            var arrayImages = siteConfig.images;
             if(imName !== null)
                 arrayImages.unshift(  {image: imName, distance: 100, opacity: 1, plane:null} );
             
@@ -190,7 +181,7 @@
             // var positionOnGlobe = { longitude: 2.3186303566461626, latitude: 48.86426741804917, altitude: 188.94939874485135 };
             // 42.7211829,1.8392353
             // 48.8365154,-3.3129326 ( rocher de la sentinelle)
-            var positionOnGlobe = { longitude:2.3186303566461626, latitude: 48.86426741804917, altitude: 1878.615379151888 };
+            var positionOnGlobe = siteConfig.positionOnGlobe;
             if(posInit){ positionOnGlobe.longitude =  Number(posInit[1]); positionOnGlobe.latitude = Number(posInit[0]), positionOnGlobe.altitude =  Number(posInit[2]) || positionOnGlobe.altitude; }
             //console.log(positionOnGlobe);
             //var miniView;
@@ -215,6 +206,7 @@
             //3D point number
             var ptname = 0;
             var picked3DMarkers = [];
+            var pickingHandlersRegistered = false;
 
             // Add one imagery layer to the scene
             // This layer is defined in a json file but it could be defined as a plain js
@@ -306,6 +298,8 @@
 
             view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.BEFORE_RENDER, scaler);
 
+            registerPickingHandlers();
+
 
             var wfsBuildingSource = new itowns.WFSSource({
                 url: 'https://data.geopf.fr/wfs/ows?',
@@ -376,66 +370,100 @@
                 // eslint-disable-next-line no-console
                 console.info('Globe initialized');
                 //updateScaleWidget();
-                // get 3D coordinates on mouse click
-                window.addEventListener('mousedown', pickPosition, false);
+                registerPickingHandlers();
+
+                // load3DModel();
+            });
+
+            function registerPickingHandlers() {
+                if (pickingHandlersRegistered) {
+                    return;
+                }
+                pickingHandlersRegistered = true;
+
+                // Capture the event before iTowns controls can consume Alt+click.
+                viewerDiv.addEventListener('mousedown', pickPosition, true);
                 window.addEventListener('keydown', function(event) {
                     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
                         event.preventDefault();
                         undoLastPickedPoint();
                     }
                 }, false);
-                function pickPosition(event) {
-                  
-                    if(event.altKey){
-                        // increment point number
-                        ptname += 1;
-                        document.getElementById('countPoints').innerHTML = "Points registered: " + ptname;
-                        var pickBuilding = pickingBuildings(event);
+            }
 
-                        if(pickBuilding.z == 0){
-                            // get 3D coordinates on ground
-                            geoposition = view.controls.pickGeoPosition(new itowns.THREE.Vector2(event.pageX,event.pageY));
-                            //console.log(view.controls.pickGeoPosition(view.eventToViewCoords(event.altKey)));
-                            // convert coordinates to geographic system
-                            let converted = geoposition.as('EPSG:4978'); console.log(converted);
-                            //coordinates = converted._values;
-                            x = converted.x;
-                            y = converted.y;
-                            z = converted.z;
-                        }
-                        else{
-                            x = pickBuilding.x, y = pickBuilding.y, z = pickBuilding.z;
-                        }
-                            
-                        var marker = show3DPicking(x,y,z, ptname);
-                        picked3DMarkers.push(marker);
-                        // export 3D coordinates to an xml file
-                        export3Dcoord(ptname,x,y,z);
-                        updatePointCounter();
-                        console.log("Nb of points picked: ", ptname);
+            function pickPosition(event) {
 
-                        // Launch computation after at least 7 matched points
-                        if(ptname >= 7){
-                            computeResection({}, getCurrentImageName(), false);
-                        }
+                if(event.altKey){
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    var pickBuilding = pickingBuildings(event);
+                    var pickedCoordinates = getPickedCoordinates(event, pickBuilding);
+                    if (!pickedCoordinates) {
+                        console.warn('Could not pick a 3D point at this position.');
+                        return;
+                    }
+
+                    // increment point number
+                    ptname += 1;
+                    updatePointCounter();
+
+                    x = pickedCoordinates.x;
+                    y = pickedCoordinates.y;
+                    z = pickedCoordinates.z;
+
+                    var marker = show3DPicking(x,y,z, ptname);
+                    picked3DMarkers.push(marker);
+                    // export 3D coordinates to an xml file
+                    export3Dcoord(ptname,x,y,z);
+                    updatePointCounter();
+                    console.log("Nb of points picked: ", ptname);
+
+                    // Launch computation after at least 7 matched points
+                    if(ptname >= 7){
+                        computeResection({}, getCurrentImageName(), false);
                     }
                 }
+            }
 
-                // load3DModel();
-            });
+            function getPickedCoordinates(event, pickBuilding) {
+                if(pickBuilding){
+                    return pickBuilding;
+                }
+
+                // get 3D coordinates on ground
+                var geoposition = view.controls.pickGeoPosition(new itowns.THREE.Vector2(event.pageX,event.pageY));
+                if (!geoposition) {
+                    return null;
+                }
+
+                // convert coordinates to geographic system
+                let converted = geoposition.as('EPSG:4978'); console.log(converted);
+                //coordinates = converted._values;
+                return {
+                    x: converted.x,
+                    y: converted.y,
+                    z: converted.z
+                };
+            }
 
 
             // Picking on buildings
             function pickingBuildings(event) {
-                var p3D = new itowns.THREE.Vector3();
                 if(view.controls.isPaused()) {
-                    var intersects = view.pickObjectsAt(event, 3, 'WFS Building');
+                    var intersects = [];
+                    try {
+                        intersects = view.pickObjectsAt(event, 3, 'WFS Building');
+                    } catch (error) {
+                        console.warn('Building picking failed, falling back to terrain picking.', error);
+                        return null;
+                    }
                     if (intersects.length) {
                         //console.log(intersects[0].point);
-                        p3D = intersects[0].point;
+                        return intersects[0].point;
                     }
                 }
-                return p3D;
+                return null;
             }
 
             function updatePointCounter() {
@@ -514,7 +542,7 @@
                             return;
                         }
                         uploadedImageName = result.uploaded[0];
-                        document.getElementById("img").src= "../data/" + encodeURIComponent(uploadedImageName);  // Get displayed image name
+                        document.getElementById("img").src= dataPath + encodeURIComponent(uploadedImageName);  // Get displayed image name
 
                         // Then we create (initialize) the 4 xml files needed. Ground points, 2D image point, camera calibration and the micmac chantier descriptor
                         setTimeout(function() {   // Ugly timer cause src change/affectation takes time and no callback used
@@ -537,6 +565,27 @@
                     return "";
                 }
                 return decodeURIComponent(img.src.split('/').pop());
+            }
+
+            function rememberOrientedImage(imgName) {
+                if (!imgName) {
+                    return;
+                }
+                try {
+                    localStorage.setItem('alegoria:lastOrientedImage:' + siteConfig.cityKey, imgName);
+                } catch (error) {
+                    console.warn('Could not remember the last oriented image.', error);
+                }
+            }
+
+            function orientedImagesUrl(imgName) {
+                var params = new URLSearchParams();
+                params.set('city', siteConfig.cityKey);
+                params.set('zone', siteConfig.zoneKey);
+                if (imgName) {
+                    params.set('imgname', imgName);
+                }
+                return 'oriented_images.html?' + params.toString();
             }
 
 
@@ -622,8 +671,9 @@
                         console.log(output_array.command);
                         console.log(output_array.output);
                         if(this.status == 200 && output_array.status == 0){
+                            rememberOrientedImage(imgName);
                             alert("MicMac calculations are done!");
-                            window.location.href = 'oriented_images.html';
+                            window.location.href = orientedImagesUrl(imgName);
                             
                         }else{
                             alert("MicMac failed to calculate orientation, for more info press on F12");
@@ -631,7 +681,7 @@
                     }
                 };
 
-                xmlhttp.open("GET", "launchMicMac.php" +"?"+ "imagename=" + encodeURIComponent(imgName), true);
+                xmlhttp.open("GET", "launchMicMac.php" + "?" + micmacQueryString(imgName), true);
                 xmlhttp.send();
             }
             
@@ -655,22 +705,35 @@
                         console.log(output_array.command);
                         console.log(output_array.output);
                         if(this.status == 200 && output_array.status == 0){
+                            rememberOrientedImage(imgName);
                             if(show) showResection();
                         }else{
                             alert("MicMac failed to calculate orientation, for more info press on F12");
                         }
                     }
                 };
-                xmlhttp.open("GET", "launchMicMac.php" +"?"+ "imagename=" + encodeURIComponent(imgName), true);
+                xmlhttp.open("GET", "launchMicMac.php" + "?" + micmacQueryString(imgName), true);
                 xmlhttp.send();
+            }
+
+            function micmacQueryString(imgName) {
+                var params = new URLSearchParams();
+                params.set('imagename', imgName);
+                params.set('city', siteConfig.cityKey);
+                params.set('zone', siteConfig.zoneKey);
+                return params.toString();
             }
             
 
             // Show oriented image using micmac aspro xml
             function showResection(){
+                if (!arrayImages.length) {
+                    console.warn('No registered image is configured for this city.');
+                    return;
+                }
                 
                 // fetch orientation file
-                var source = new FetchSource('../outputs/test/');
+                var source = new FetchSource(outputPath);
                 // parse micmac orientation
                 source.open('Ori-Aspro/Orientation-' + arrayImages[currentIndiceNav].image + '.xml', 'text') // change orientation file each time you change the picture!
                     .then(data => MicmacOrientationParser.parse(data, source))
@@ -680,9 +743,13 @@
             
             // Show oriented image using micmac aspro xml
             function previewResection(){
+                if (!arrayImages.length) {
+                    console.warn('No registered image is configured for this city.');
+                    return;
+                }
                 
                 // fetch orientation file
-                var source = new FetchSource('../outputs/test/');
+                var source = new FetchSource(outputPath);
                 // parse micmac orientation
                 source.open('Ori-Aspro/Orientation-' + arrayImages[currentIndiceNav].image + '.xml', 'text') // change orientation file each time you change the picture!
                     .then(data => MicmacOrientationParser.parse(data, source))
@@ -747,7 +814,7 @@
             }
 
 
-            const uvTexture = new itowns.THREE.TextureLoader().load('../data/uv.jpg');
+            const uvTexture = new itowns.THREE.TextureLoader().load(dataPath + 'uv.jpg');
             
 
             // function to handle micmac orientation file
@@ -762,8 +829,8 @@
                 //view.camera._preSSE = 12000;  // Weird but needed to keep good tile resolution
                 arrDisplayedImages.push(cam);
                 textureMaterial = new OrientedImageMaterial({
-                    map: new itowns.THREE.TextureLoader().load('../data/uv.jpg'), // uvTexture,
-                   // tDepth: new itowns.THREE.TextureLoader().load('../data/uv.jpg'),
+                    map: new itowns.THREE.TextureLoader().load(dataPath + 'uv.jpg'), // uvTexture,
+                   // tDepth: new itowns.THREE.TextureLoader().load(dataPath + 'uv.jpg'),
                     opacity:currentOpacity,
                     transparent:true,
                 });
@@ -782,7 +849,7 @@
                 // camera set from micmac orientation file
                 camera = cam;
                 if(pictureInfos.plane == null){
-                    plane = setupPictureFromCamera(camera, '../data/' + pictureInfos.image, pictureInfos.opacity, pictureInfos.distance); // plane is added to the photogra camara (so the scene)
+                    plane = setupPictureFromCamera(camera, dataPath + pictureInfos.image, pictureInfos.opacity, pictureInfos.distance); // plane is added to the photogra camara (so the scene)
                     pictureInfos.plane = plane;
                 }else{
                     plane = pictureInfos.plane;
@@ -794,7 +861,7 @@
                 p2.updateMatrixWorld();
                 view.scene.add(p2);
 */
-                textureMaterial.map = new itowns.THREE.TextureLoader().load('../data/' + pictureInfos.image);
+                textureMaterial.map = new itowns.THREE.TextureLoader().load(dataPath + pictureInfos.image);
                 textureMaterial.transparent = true;
                 updateCamera();
 
@@ -819,9 +886,9 @@
             }
 
             // If no initial position passed in the URL we launch the first registered image
-            if(! posInit){
+            if(! posInit && arrayImages.length){
                 // fetch orientation file
-                var source = new FetchSource('../outputs/test/');
+                var source = new FetchSource(outputPath);
                 // parse micmac orientation
                 source.open('Ori-Aspro/Orientation-' + arrayImages[currentIndiceNav].image + '.xml', 'text') // change orientation file each time you change the picture!
                     .then(data => MicmacOrientationParser.parse(data, source))
@@ -940,6 +1007,10 @@
             }
 
             function nextImage(){
+                if (!arrayImages.length) {
+                    console.warn('No registered image is configured for this city.');
+                    return;
+                }
                // meshesForeverever = [];
                 currentIndiceNav = (currentIndiceNav + 1) % arrayImages.length; console.log("currentIndiceNav ",currentIndiceNav);
                 console.log('indice image: ', currentIndiceNav);

@@ -18,9 +18,11 @@
             }
         </style>
         <meta charset="UTF-8">
+        <link rel="icon" href="../data/logoAlegoria.jpg">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="../itowns-photogrammetric-camera/examples/js/GUI/dat.gui/dat.gui.min.js"></script>
         <script src="../itowns-photogrammetric-camera/examples/js/OrientedImageHelper.js"></script>
+        <script src="config/sites.js"></script>
     </head>
     <body>
         <div id="viewerDiv">
@@ -36,11 +38,18 @@
        <!-- <script src="../../src/photogrammetic_camera/three-photogrammetric-camera.js"></script>  -->
         <script type="text/javascript">
 
-            // Get possible parameters from url like imagename
-            var parameters = location.search.substring(1).split("&");
-            var temp = parameters[0].split("=");
-            var imName = unescape(temp[1]);
-            console.log(imName);
+            var siteConfig = getAlegoriaSiteConfig('oriented_images');
+            var urlpage = new URL(location);
+            var imName = urlpage.searchParams.get("imgname") || urlpage.searchParams.get("imagename");
+            if (!imName) {
+                try {
+                    imName = localStorage.getItem('alegoria:lastOrientedImage:' + siteConfig.cityKey);
+                } catch (error) {
+                    console.warn('Could not read the last oriented image.', error);
+                }
+            }
+            var dataPath = siteConfig.dataPath;
+            var outputPath = siteConfig.outputPath;
 
             // THREE photogrammetric camera variables
             var PhotogrammetricCamera = itowns.PhotogrammetricCamera;
@@ -81,23 +90,8 @@
             var meshesForeverever = [];
 
             // Alex modifications to handle multiple images
-            var arrayImages = [];
-            arrayImages = [{image: 'planNotreDame.jpg', distance: 200, opacity: 1, plane:null},
-                           {image: 'plandetailleCite.jpg', distance: 200, opacity: 1, plane:null},
-                           {image: 'notredame.jpg', distance: 200, opacity: 1, plane:null},
-                           {image: '1919_CAF_C-1_0012.jpg', distance: 200, opacity: 1, plane:null}, 
-                           {image: '1951_DUR_208_0007.jpg', distance: 200, opacity: 1, plane:null},
-                           {image: '1951_DUR_214_0024.jpg', distance: 200, opacity: 1, plane:null}, 
-                           {image: '1951_DUR_214_0022.jpg', distance: 200, opacity: 1, plane:null},
-                           {image: '1919_CAF_Z-36_0008.jpg', distance: 200, opacity: 1, plane:null},
-                           {image: 'trocadero2.jpg', distance: 200, opacity: 1, plane:null},
-                           {image: 'FRAN_0207_3299_L.jpg', distance: 200, opacity: 1, plane:null},
-                           {image: 'FRAN_0207_0648_L.jpg', distance: 200, opacity: 1, plane:null}];
-                           
-                           
-                           
-
-            if(imName !== 'undefined')
+            var arrayImages = siteConfig.images;
+            if(imName)
                 arrayImages.unshift(  {image: imName, distance: 100, opacity: 1, plane:null} );
             
             // Add one imagery layer to the scene
@@ -292,7 +286,7 @@
             }
 
 
-            const uvTexture = new itowns.THREE.TextureLoader().load('../data/uv.jpg');
+            const uvTexture = new itowns.THREE.TextureLoader().load(dataPath + 'uv.jpg');
 
             function returnExistingCamImage(cam){
 
@@ -314,7 +308,7 @@
                 arrDisplayedImages.push(cam);
 
                 textureMaterial = new OrientedImageMaterial({
-                    map: new itowns.THREE.TextureLoader().load('../data/uv.jpg'), // uvTexture,
+                    map: new itowns.THREE.TextureLoader().load(dataPath + 'uv.jpg'), // uvTexture,
                     opacity:currentOpacity,
                     transparent:true,
                 });
@@ -350,7 +344,7 @@
                 // camera set from micmac orientation file
                 camera = cam;
                 if(pictureInfos.plane == null){
-                    plane = setupPictureFromCamera(camera, '../data/' + pictureInfos.image, pictureInfos.opacity, pictureInfos.distance); // plane is added to the photogra camara (so the scene)
+                    plane = setupPictureFromCamera(camera, dataPath + pictureInfos.image, pictureInfos.opacity, pictureInfos.distance); // plane is added to the photogra camara (so the scene)
                     pictureInfos.plane = plane;
                 }else{
                     plane = pictureInfos.plane;
@@ -363,7 +357,7 @@
                 p2.updateMatrixWorld();
                 view.scene.add(p2);
 
-                textureMaterial.map = new itowns.THREE.TextureLoader().load('../data/' + pictureInfos.image);
+                textureMaterial.map = new itowns.THREE.TextureLoader().load(dataPath + pictureInfos.image);
                 textureMaterial.transparent = true;
                 updateCamera();
 
@@ -398,11 +392,57 @@
 
 
             // fetch orientation file
-            var source = new FetchSource('../outputs/test/');
-            // parse micmac orientation
-            source.open('Ori-Aspro/Orientation-' + arrayImages[currentIndiceNav].image + '.xml', 'text') // change orientation file each time you change the picture!
-                .then(data => MicmacOrientationParser.parse(data, source))
-                .then(handleOrientation);
+            var source = new FetchSource(outputPath);
+            loadInitialOrientation();
+
+            function loadInitialOrientation() {
+                if (arrayImages.length) {
+                    loadCurrentOrientation();
+                    return;
+                }
+
+                fetchLatestOrientedImage().then(function(imgName) {
+                    if (!imgName) {
+                        console.warn('No registered image is configured for this city.');
+                        return;
+                    }
+                    arrayImages.unshift({image: imgName, distance: 100, opacity: 1, plane: null});
+                    currentIndiceNav = 0;
+                    loadCurrentOrientation();
+                });
+            }
+
+            function loadCurrentOrientation() {
+                // parse micmac orientation
+                source.open('Ori-Aspro/Orientation-' + arrayImages[currentIndiceNav].image + '.xml', 'text') // change orientation file each time you change the picture!
+                    .then(data => MicmacOrientationParser.parse(data, source))
+                    .then(handleOrientation);
+            }
+
+            function fetchLatestOrientedImage() {
+                return fetch('latestOrientedImage.php?city=' + encodeURIComponent(siteConfig.cityKey))
+                    .then(function(response) {
+                        if (!response.ok) {
+                            return null;
+                        }
+                        return response.json();
+                    })
+                    .then(function(result) {
+                        if (!result || !result.image) {
+                            return null;
+                        }
+                        try {
+                            localStorage.setItem('alegoria:lastOrientedImage:' + siteConfig.cityKey, result.image);
+                        } catch (error) {
+                            console.warn('Could not remember the last oriented image.', error);
+                        }
+                        return result.image;
+                    })
+                    .catch(function(error) {
+                        console.warn('Could not fetch the last oriented image.', error);
+                        return null;
+                    });
+            }
 
 
             function updatePlaneDistance(value) {
@@ -490,13 +530,15 @@
 
       
             function nextImage(){
+                if (!arrayImages.length) {
+                    console.warn('No registered image is configured for this city.');
+                    return;
+                }
                // meshesForeverever = [];
                 currentIndiceNav = (currentIndiceNav + 1) % arrayImages.length; console.log("currentIndiceNav ",currentIndiceNav);
                 console.log('indice image: ', currentIndiceNav);
 
-                source.open('Ori-Aspro/Orientation-' + arrayImages[currentIndiceNav].image + '.xml', 'text') // change orientation file each time you change the picture!
-                .then(data => MicmacOrientationParser.parse(data, source))
-                .then(handleOrientation);
+                loadCurrentOrientation();
                 //view.notifyChange();
             }
             

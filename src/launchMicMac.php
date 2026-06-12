@@ -7,6 +7,8 @@ if ($img_name === '') {
     echo json_encode(['output' => 'Missing imagename parameter', 'status' => 1]);
     exit;
 }
+$city = preg_replace('/[^a-zA-Z0-9_-]/', '', $_GET['city'] ?? 'default');
+$zone = preg_replace('/[^a-zA-Z0-9_-]/', '', $_GET['zone'] ?? 'default');
 //Method to execute a command in the terminal
 function terminal($command)
 {
@@ -118,6 +120,17 @@ $cmd = "mm3d Aspro" . " " . $img_name . " " . $calib_file . " " . $gcp_file . " 
 //retrieve MicMac command output and store it into an array
 $output_array = terminal($cmd);
 $output_array['command'] = $cmd;
+
+if ((int) $output_array['status'] === 0) {
+    $latest_file = $path_to_output . DIRECTORY_SEPARATOR . 'latest_oriented_' . $city . '.json';
+    file_put_contents($latest_file, json_encode([
+        'image' => $img_name,
+        'city' => $city,
+        'zone' => $zone,
+        'orientation' => 'Ori-Aspro/Orientation-' . $img_name . '.xml',
+        'updatedAt' => gmdate('c'),
+    ]));
+}
 
 //encode the output as json
 echo json_encode($output_array);
