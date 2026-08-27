@@ -10,10 +10,6 @@ visualisation.
 
 ![alt text](https://raw.githubusercontent.com/itownsResearch/docs/master/oldProj2.gif "Alegoria")
 
-> 🇫🇷 **Documentation en français** — l'utilisation des outils de **saisie** et
-> de **visualisation** est décrite dans
-> [`docs/saisie-visualisation.fr.md`](docs/saisie-visualisation.fr.md).
-
 ## Quick start (Docker)
 
 Requires Docker with the Compose plugin.
@@ -26,10 +22,12 @@ docker compose up --build
 
 Then open:
 
-- http://localhost:8080/alegoria4agape/src/oriented_images.html — visualization of oriented images
-- http://localhost:8080/alegoria4agape/src/globe.html — semi-automatic registration tool
-- http://localhost:8080/alegoria4agape/src/lyon/oriented_images.html
-- http://localhost:8080/alegoria4agape/src/lyon/globe.html
+| Page | URL |
+| --- | --- |
+| Visualization of oriented images | http://localhost:8080/alegoria4agape/src/oriented_images.html |
+| Semi-automatic registration tool | http://localhost:8080/alegoria4agape/src/globe.html |
+| Lyon — oriented images | http://localhost:8080/alegoria4agape/src/lyon/oriented_images.html |
+| Lyon — globe | http://localhost:8080/alegoria4agape/src/lyon/globe.html |
 
 That's it — MicMac is built and configured for you. The first build compiles it
 from source and takes a while; see [Docker in detail](#docker-in-detail) to
@@ -125,12 +123,14 @@ from the clone itself — the URLs below include the `/alegoria4agape/` prefix.
 
 ### 3. Open the application
 
-Replace `localhost` with the host and port your server uses:
+Replace `localhost` with the host and port your server uses.
 
-- http://localhost/alegoria4agape/src/oriented_images.html — visualization of oriented images
-- http://localhost/alegoria4agape/src/globe.html — semi-automatic registration tool
-- http://localhost/alegoria4agape/src/lyon/oriented_images.html
-- http://localhost/alegoria4agape/src/lyon/globe.html
+| Page | URL |
+| --- | --- |
+| Visualization of oriented images | http://localhost/alegoria4agape/src/oriented_images.html |
+| Semi-automatic registration tool | http://localhost/alegoria4agape/src/globe.html |
+| Lyon — oriented images | http://localhost/alegoria4agape/src/lyon/oriented_images.html |
+| Lyon — globe | http://localhost/alegoria4agape/src/lyon/globe.html |
 
 ### 4. Configure MicMac for globe.html
 
@@ -165,7 +165,11 @@ To add a new city or zone:
 You can also open a configured zone directly by adding query parameters, for
 example with Docker:
 
-```
-http://localhost:8080/alegoria4agape/src/globe.html?city=lyon&zone=default
-http://localhost:8080/alegoria4agape/src/oriented_images.html?city=lyon&quartier=default
-```
+| Target | URL |
+| --- | --- |
+| Lyon, `default` zone | http://localhost:8080/alegoria4agape/src/globe.html?city=lyon&zone=default |
+| Lyon, `default` quartier | http://localhost:8080/alegoria4agape/src/oriented_images.html?city=lyon&quartier=default |
+
+> 🇫🇷 **Documentation en français** — l'utilisation des outils de **saisie** et
+> de **visualisation** est décrite dans
+> [`docs/saisie-visualisation.fr.md`](docs/saisie-visualisation.fr.md).
