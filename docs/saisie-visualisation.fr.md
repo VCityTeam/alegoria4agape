@@ -1,26 +1,9 @@
-> **Historical document — superseded.**
-> This is an earlier README from the upstream
-> [`itownsResearch/alegoria`](https://github.com/itownsResearch/alegoria) project and its
-> instructions no longer apply to this repository. See the [README](README.md) instead.
+# Saisie et visualisation (français)
 
-# Notes on the tools of semi-automatic registration of images and the visualisation
+Ce document décrit l'utilisation des outils de **saisie** (`globe.html`) et de
+**visualisation** (`oriented_images.html`).
 
-
-## Installation
-
-The alegoria Web Tools use iTowns as a submodules so in order to get the sources and the builts:
-
-```
-git clone --recursive https://github.com/itownsResearch/alegoria
-```
-
-You're done!
-Now launch your favorite http-server (you'll need php for the semi-automatic registration tool) and access the demo here
-
-- http://localhost/alegoria/src/oriented_images.html   (visualization of oriented images)
-- http://localhost/alegoria/src/globe.html             (semi-automatic registration tool)
-
-
+Pour l'installation et la configuration, voir le [README](../README.md).
 
 ## SAISIE
 Globe.html est la page qui permet d'effectuer la **saisie**
@@ -39,14 +22,14 @@ Globe.html est la page qui permet d'effectuer la **saisie**
 
 ### Notes:
 Le nom de l'image à recaler est à indiquer dans la balise img, src en haut du fichier
-   ex ->  <img id="img" src="../../data/FRAN_0207_0558_L.jpg" onmousedown="getImgCoordOnClick(event)">
+   ex ->  <img id="img" src="../data/FRAN_0207_0558_L.jpg" onmousedown="getImgCoordOnClick(event)">
 
 La saisie permet de générer les fichiers de points d'appuis appuis_NomImage.xml et points au sol, gcp_NomImage.xml
 
 
 Comme les images historiques ont dans les EXIF les informations de scanner ou pas d'exif ou autre exif pas utile pour nousn il faut veiller à indiquer soit de ne pas utiliser ces exifs soit à nommer un fichier avec le nom de l'appareil photo contenant PPA, image size, et focal.
 
-Mouna_partie_itowns\outputs\test\MicMac-LocalChantierDescripteur.xml, Ori-CalInit/AutoCal_Foc-50000_Cam-defaultCam.xml sont les 2 fichiers permettant de gérer la calibration
+`outputs/test/MicMac-LocalChantierDescripteur.xml` et `Ori-CalInit/AutoCal_Foc-50000_Cam-defaultCam.xml` sont les 2 fichiers permettant de gérer la calibration
 
 Le fichier de calibration est créé automatiquement: voir le fichier exemple Ori-CalInit/AutoCal_Foc-50000_Cam-defaultCam.xml. On estime la focale avec image width * 36/50mm pour un objectif 50mm par ex.
 
@@ -63,11 +46,10 @@ En haut de la page, on définit la/les images à visualiser
                 {image: 'FRAN_0207_0559_L.jpg',distance: 2000,opacity: 1, plane:null}];
            
 
-Attention aux différents répertoires indiqués dans le code. Tel quel, nous avons "Mouna_partie_itowns\outputs\test\Ori-Aspro" qui contient les infos d'ori de l'image recalée
+Attention aux différents répertoires indiqués dans le code. Tel quel, nous avons `outputs/test/Ori-Aspro` qui contient les infos d'ori de l'image recalée
 ex: Orientation-FRAN_0207_0558_L.jpg
 
-Les images elles-mêmes sont dans Mouna_partie_itowns\data
+Les images elles-mêmes sont dans `data/`
 
 
 Dans le menu Oriented Image il est possible de faire varier la distance et l'opacité de l'image recalée
-

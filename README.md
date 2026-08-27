@@ -5,31 +5,45 @@ This repository supports the **AGAPE** project and is based on the previous
 The name **alegoria4agape** reflects that relationship: this project makes use
 of Alegoria's tools and code as a foundation for AGAPE.
 
-## Notes on the tools of semi-automatic registration of images and visualisation
+Tools for the semi-automatic registration of historical images and their
+visualisation.
 
 ![alt text](https://raw.githubusercontent.com/itownsResearch/docs/master/oldProj2.gif "Alegoria")
 
-## Installation
+> 🇫🇷 **Documentation en français** — l'utilisation des outils de **saisie** et
+> de **visualisation** est décrite dans
+> [`docs/saisie-visualisation.fr.md`](docs/saisie-visualisation.fr.md).
 
-The alegoria4agape Web Tools use iTowns as a submodule so in order to get the sources and the builts:
+There are two ways to run the application. Pick **one** and follow it through:
+[Docker](#quick-start-docker) (recommended) or a
+[manual installation](#manual-installation).
 
-```
-git clone --recursive https://github.com/VCityTeam/alegoria4agape
-```
+## Requirements
 
-You're done!
-Now launch your favorite http-server (you'll need php for the semi-automatic registration tool) and access the demo here
+| Setup | Needs |
+| --- | --- |
+| Docker | Docker with the Compose plugin (`docker compose`) |
+| Manual installation | `git`, an HTTP server, and **PHP** (required by the semi-automatic registration tool) |
 
-- http://localhost/alegoria4agape/src/oriented_images.html   (visualization of oriented images)
-- http://localhost/alegoria4agape/src/globe.html             (semi-automatic registration tool)
-- http://localhost/alegoria4agape/src/lyon/oriented_images.html
-- http://localhost/alegoria4agape/src/lyon/globe.html
-
-## Docker
+## Quick start (Docker)
 
 This Docker setup builds a complete runtime for
 [`VCityTeam/alegoria4agape`](https://github.com/VCityTeam/alegoria4agape) with
 [`VCityTeam/micmac4agape`](https://github.com/VCityTeam/micmac4agape).
+
+Build and run the web tool from this repository:
+
+```
+docker compose up --build
+```
+
+The first build compiles MicMac from source and takes a while. Adjust
+`MICMAC_BUILD_PARALLEL` (see
+[Docker configuration reference](#docker-configuration-reference)) to match the
+cores you have available.
+
+The application is then served at **`http://localhost:8080`** — see
+[Opening the application](#opening-the-application) for the page paths.
 
 The Dockerfile uses a multi-stage build:
 
@@ -38,22 +52,51 @@ The Dockerfile uses a multi-stage build:
 3. Copy both into a PHP/Apache runtime image.
 4. Configure PHP for image uploads and long-running MicMac requests.
 
-The application source is not copied from the local checkout during the image
-build. Docker fetches it from `ALEGORIA_REPOSITORY` with `git clone
---recursive`, and MicMac from `MICMAC_REPOSITORY`.
+## Manual installation
 
-Build and run the web tool from this repository:
+The alegoria4agape Web Tools use iTowns as a submodule
+([`itowns-photogrammetric-camera`](https://github.com/VCityTeam/itowns-photogrammetric-camera4agape))
+so in order to get the sources and the builts:
 
 ```
-docker compose up --build
+git clone --recursive https://github.com/VCityTeam/alegoria4agape
 ```
 
-Then open:
+If you cloned without `--recursive`, fetch the submodule afterwards:
 
-- http://localhost:8080/alegoria4agape/src/oriented_images.html
-- http://localhost:8080/alegoria4agape/src/globe.html
-- http://localhost:8080/alegoria4agape/src/lyon/oriented_images.html
-- http://localhost:8080/alegoria4agape/src/lyon/globe.html
+```
+git submodule update --init --recursive
+```
+
+You're done!
+Now launch your favorite http-server (you'll need php for the semi-automatic
+registration tool).
+
+Serve from the **parent directory of the clone**, not from the clone itself:
+the URLs below include the `/alegoria4agape/` prefix.
+
+The application is then served at **`http://localhost`** (or whichever port your
+server uses) — see [Opening the application](#opening-the-application) for the
+page paths.
+
+## Opening the application
+
+Combine the base URL of the setup you chose with the path of the page you want:
+
+| Setup | Base URL |
+| --- | --- |
+| Docker | `http://localhost:8080` |
+| Manual installation | `http://localhost` (or your server's port) |
+
+| Page | Path |
+| --- | --- |
+| Visualization of oriented images | `/alegoria4agape/src/oriented_images.html` |
+| Semi-automatic registration tool | `/alegoria4agape/src/globe.html` |
+| Lyon — oriented images | `/alegoria4agape/src/lyon/oriented_images.html` |
+| Lyon — globe | `/alegoria4agape/src/lyon/globe.html` |
+
+For example, with Docker the registration tool is at
+`http://localhost:8080/alegoria4agape/src/globe.html`.
 
 ## City, quartier, and zone configuration
 
@@ -74,12 +117,25 @@ To add a new city or zone:
 3. Optionally create `src/<city>/oriented_images.html` and
    `src/<city>/globe.html` redirect files like the Lyon ones.
 
-You can also open a configured zone directly:
+You can also open a configured zone directly, by appending the query parameters
+to the paths above:
 
 ```
-http://localhost:8080/alegoria4agape/src/globe.html?city=lyon&zone=default
-http://localhost:8080/alegoria4agape/src/oriented_images.html?city=lyon&quartier=default
+/alegoria4agape/src/globe.html?city=lyon&zone=default
+/alegoria4agape/src/oriented_images.html?city=lyon&quartier=default
 ```
+
+## Docker configuration reference
+
+This section applies to the [Docker](#quick-start-docker) setup only.
+
+The application source is not copied from the local checkout during the image
+build. Docker fetches it from `ALEGORIA_REPOSITORY` with `git clone
+--recursive`, and MicMac from `MICMAC_REPOSITORY`.
+
+At **runtime**, however, `docker-compose.yml` bind-mounts the local `./src` over
+the copy in the image. Edits to `src/` therefore take effect on a browser
+refresh, with no rebuild needed.
 
 The container serves the PHP application with Apache and sets:
 
@@ -109,58 +165,18 @@ docker compose build \
   --build-arg MICMAC_BUILD_PARALLEL=4
 ```
 
-### Notes for micmac with globe.html
+## Running MicMac with globe.html
+
+### With Docker
+
+Nothing to configure: the image already compiles MicMac, sets `MICMAC_BIN`, and
+puts the MicMac binaries on `PATH`.
+
+### With a manual installation
+
 - On Linux, beware that in order to create the different files (ground point etc) you will need to specify write authorization. You can set an authorization recursive for the all alegoria directory like chmod -R 777 alegoria/
 - Check the launchMicMac.php to verify that it can find micmac4agape and your images (micmac inputs around line 47). You might add a path to micmac4agape bin like this at the beginning of the function terminal
+
     //add MicMac to global Path
     $path = '/home/myusername/micmac4agape/bin';
     putenv('PATH=' . getenv('PATH') . PATH_SEPARATOR . $path);
-
-## SAISIE
-Globe.html est la page qui permet d'effectuer la **saisie**
-
-1) Placer la camera de la scene ds un point de vue qui ressemble à celui de la photo ancienne ( Ctrl-click permet la rotation, LeftClick la translation,... )
-    Il est possible d'initialiser la position de la camera ds le code.
-
-2) Saisir les points de correspondance: 
-    - Shift-click dans l'image ancienne pour saisir un point 2D image
-    - Alt-click dans la scène 3D pour saisir un point terrain.
-
-    Il est nécessaire de saisir au moins 7 points homologues (procéder par alternance image-terrain, image-terrain...)
-
-3) Lancer Micmac à l'aide du bouton sous l'image à recaler.
-
-
-### Notes:
-Le nom de l'image à recaler est à indiquer dans la balise img, src en haut du fichier
-   ex ->  <img id="img" src="../data/FRAN_0207_0558_L.jpg" onmousedown="getImgCoordOnClick(event)">
-
-La saisie permet de générer les fichiers de points d'appuis appuis_NomImage.xml et points au sol, gcp_NomImage.xml
-
-
-Comme les images historiques ont dans les EXIF les informations de scanner ou pas d'exif ou autre exif pas utile pour nousn il faut veiller à indiquer soit de ne pas utiliser ces exifs soit à nommer un fichier avec le nom de l'appareil photo contenant PPA, image size, et focal.
-
-Mouna_partie_itowns\outputs\test\MicMac-LocalChantierDescripteur.xml, Ori-CalInit/AutoCal_Foc-50000_Cam-defaultCam.xml sont les 2 fichiers permettant de gérer la calibration
-
-Le fichier de calibration est créé automatiquement: voir le fichier exemple Ori-CalInit/AutoCal_Foc-50000_Cam-defaultCam.xml. On estime la focale avec image width * 36/50mm pour un objectif 50mm par ex.
-
-Donc soit l'image a des infos EXIF et dans ce cas il faut que le fichier autocal reprenne le nom du modele de cam de l'exif (exemple ave cle scanner supraScan...), soit si pas d'exif il faut un fichier qui s'appelle 'AutoCal_Foc-50000.xml', enfin selon ce qui est défini dans le Micmac-LocalChantierDescripteur ( CalcName 50.0 ).
-
-
-
-
-## VISUALISATION
-oriented_images.html est la page qui permet de visualiser les images recalées
-En haut de la page, on définit la/les images à visualiser 
-
- arrayImages = [{image: 'FRAN_0207_0558_L.jpg',distance: 2000,opacity: 1, plane:null}, 
-                {image: 'FRAN_0207_0559_L.jpg',distance: 2000,opacity: 1, plane:null}];
-           
-
-Attention aux différents répertoires indiqués dans le code. Tel quel, nous avons "Mouna_partie_itowns\outputs\test\Ori-Aspro" qui contient les infos d'ori de l'image recalée
-ex: Orientation-FRAN_0207_0558_L.jpg
-
-Les images elles-mêmes sont dans Mouna_partie_itowns\data
-
-
-Dans le menu Oriented Image il est possible de faire varier la distance et l'opacité de l'image recalée
