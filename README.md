@@ -91,6 +91,81 @@ That's it — MicMac is built and configured for you. The first build compiles i
 from source and takes a while; see [Docker in detail](#docker-in-detail) to
 speed that up or to change what gets built.
 
+## What you should see
+
+Clicking **Lyon — globe** opens the semi-automatic registration tool centred on
+Lyon:
+
+![The globe view of Lyon, showing extruded BDTopo buildings over IGN aerial imagery](docs/Screenshot-Itowns-Globe-Lyon.png)
+
+The view is a 3D globe: IGN aerial imagery draped over the terrain, with the
+white extruded buildings of the IGN **BDTopo** database on top. The screenshot
+looks over the Presqu'île, between the Saône and the Rhône.
+
+The first load takes a few seconds — the terrain, imagery and building tiles are
+streamed from IGN as you move, so the scene sharpens progressively. The
+buildings only appear once you are zoomed in close enough (the building layer is
+served at zoom level 15 only), so a fully zoomed-out globe legitimately shows no
+white blocks.
+
+The bar along the bottom is the registration toolbar:
+
+| Control | What it does |
+| --- | --- |
+| **Choose files / Upload File** | Upload the historical photographs you want to register |
+| **Points registered: N** | How many correspondence points you have picked so far |
+| **Undo** | Remove the last picked point pair (also **Ctrl+Z**) |
+| `Alt+click 3D point, Shift+click image point` | A reminder of the two picking gestures, not a button |
+| **Go** | Run the MicMac resection with the points picked so far |
+
+The uploaded photograph appears in the small panel at the top right, above the
+Alegoria logo. Registration itself is described in
+[`docs/saisie-visualisation.fr.md`](docs/saisie-visualisation.fr.md).
+
+## Navigating the 3D view
+
+### With a mouse
+
+| Gesture | Effect |
+| --- | --- |
+| **Left-drag** | Grab and rotate the globe — the point under the cursor follows it |
+| **Ctrl + left-drag** | Orbit around the point you are looking at, changing the viewing angle |
+| **Shift + left-drag** | Look around from where you are, without moving the camera |
+| **Right-drag** | Pan sideways, parallel to the screen |
+| **Middle-drag** | Move forward and backward along the view direction |
+| **Mouse wheel** | Zoom in and out |
+| **Double-click** | Fly to that point and zoom in on it |
+
+### With the keyboard
+
+| Key | Effect |
+| --- | --- |
+| **↑ ↓ ← →** | Pan the camera |
+| **Hold `r`** | Preview the last computed orientation; release to return to your view |
+| **`s`** | Switch to the street-level view |
+| **`c`** | Re-centre the camera in the street-level view |
+| **Ctrl+Z** | Undo the last picked point |
+
+### On a touchscreen
+
+| Gesture | Effect |
+| --- | --- |
+| **One finger** | Rotate the globe |
+| **Two fingers** | Orbit, and pinch to zoom |
+| **Three fingers** | Pan |
+
+### Picking points
+
+| Gesture | Effect |
+| --- | --- |
+| **Alt+click** in the 3D view | Register a 3D ground point (or a point on a building) |
+| **Shift+click** in the uploaded image | Register the matching 2D point in the photograph |
+
+Alt+click is intercepted before the navigation controls see it, so it picks a
+point instead of moving the camera. Once **seven** point pairs are registered,
+the MicMac computation starts automatically — you do not have to press **Go**.
+
+
 ## Starting and stopping the application
 
 Run all of these from the `alegoria4agape` directory, with Docker running.
