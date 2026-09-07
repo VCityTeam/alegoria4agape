@@ -46,8 +46,22 @@ Docker Desktop already includes the Compose plugin. On Linux with Docker
 Engine, install the Compose plugin as well — this project uses the
 `docker compose` command.
 
-Check that both tools are available (start Docker Desktop first if you are on
-Windows or macOS):
+### Start Docker
+
+Docker must be **running** before any `docker` command works — installing it is
+not enough.
+
+| Your system | How to start it |
+| --- | --- |
+| Windows | Open **Docker Desktop** from the Start menu. Wait until the whale icon in the system tray stops animating and the dashboard says *Engine running*. |
+| macOS | Open **Docker Desktop** from Applications or Spotlight. Wait until the whale icon in the menu bar stops animating and the dashboard says *Engine running*. |
+| Linux (Docker Desktop) | Launch **Docker Desktop** from your applications menu, or run `systemctl --user start docker-desktop`. |
+| Linux (Docker Engine) | `sudo systemctl start docker` — and `sudo systemctl enable docker` if you want it to start at every boot. |
+
+On Windows and macOS the engine only runs while Docker Desktop is open. Quitting
+Docker Desktop stops every container.
+
+Now check that both tools are available:
 
 ```
 git --version
@@ -76,6 +90,57 @@ Then open:
 That's it — MicMac is built and configured for you. The first build compiles it
 from source and takes a while; see [Docker in detail](#docker-in-detail) to
 speed that up or to change what gets built.
+
+## Starting and stopping the application
+
+Run all of these from the `alegoria4agape` directory, with Docker running.
+
+### Stop it
+
+`docker compose up` keeps running and printing logs in your terminal. To stop
+the application:
+
+| What you want | Do this |
+| --- | --- |
+| Stop and keep everything | Press **Ctrl+C** in the terminal running `docker compose up` |
+| Stop and remove the container | `docker compose down` |
+| Stop, but keep the container to restart quickly | `docker compose stop` |
+
+`docker compose down` removes the container, **not** your data — `data/` and
+`outputs/` live in named volumes that survive it. Only `docker compose down -v`
+deletes those volumes, and with them all MicMac results.
+
+### Start it again
+
+After the first build you no longer need `--build`:
+
+```
+docker compose up
+```
+
+Add `-d` to run it in the background so you get your terminal back:
+
+```
+docker compose up -d
+```
+
+Then follow the logs with `docker compose logs -f`, and stop it later with
+`docker compose down`. Use `--build` again only after changing the `Dockerfile`
+or the build arguments — edits under `src/` need just a browser refresh.
+
+### From Docker Desktop instead
+
+If you prefer buttons to commands, everything above is also in the Docker
+Desktop dashboard:
+
+1. Open the **Containers** tab.
+2. Find the `alegoria4agape` stack.
+3. Use **Start** (▶), **Stop** (■), and **Delete** (🗑) on the row.
+4. Click the container name to read its logs, or use the **Open in browser**
+   button to reach http://localhost:8080.
+
+Note that stopping the container from Docker Desktop also ends the
+`docker compose up` command in your terminal.
 
 ## Docker in detail
 
