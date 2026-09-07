@@ -10,9 +10,53 @@ visualisation.
 
 ![alt text](https://raw.githubusercontent.com/itownsResearch/docs/master/oldProj2.gif "Alegoria")
 
+## Which setup should I choose?
+
+There are two ways to install alegoria4agape. Pick one:
+
+| | [Quick start (Docker)](#quick-start-docker) | [Manual installation (developers)](#manual-installation-developers) |
+| --- | --- | --- |
+| **For whom** | Everyone — first-time users, anyone who just wants to see the tools running | Developers who want to work on the code, or who cannot run Docker |
+| **You install** | [Docker](https://www.docker.com/) and [Git](https://git-scm.com/) | Git, an HTTP server, [PHP](https://www.php.net/), and MicMac built from source |
+| **MicMac** | Built and configured for you | You build and configure it yourself |
+| **Effort** | Two commands, then wait for the first build | Several manual steps |
+
+If you are new here, use the Quick start.
+
 ## Quick start (Docker)
 
-Requires Docker with the Compose plugin.
+### Prerequisites
+
+You need two tools installed before you begin.
+
+| Tool | What it is | Install |
+| --- | --- | --- |
+| **Git** | Version control tool, used to download this repository and its submodules | [git-scm.com/downloads](https://git-scm.com/downloads) |
+| **Docker** | Runs the application in a preconfigured container, so you do not have to install PHP, Apache or MicMac yourself | See the table below |
+
+Which Docker to install:
+
+| Your system | Install |
+| --- | --- |
+| Windows | [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/) |
+| macOS | [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/) |
+| Linux | [Docker Desktop for Linux](https://docs.docker.com/desktop/install/linux-install/), or [Docker Engine](https://docs.docker.com/engine/install/) with the [Compose plugin](https://docs.docker.com/compose/install/linux/) |
+
+Docker Desktop already includes the Compose plugin. On Linux with Docker
+Engine, install the Compose plugin as well — this project uses the
+`docker compose` command.
+
+Check that both tools are available (start Docker Desktop first if you are on
+Windows or macOS):
+
+```
+git --version
+docker compose version
+```
+
+If both commands print a version, you are ready.
+
+### Install and run
 
 ```
 git clone --recursive https://github.com/VCityTeam/alegoria4agape
@@ -93,12 +137,21 @@ docker compose build \
   --build-arg MICMAC_BUILD_PARALLEL=4
 ```
 
-## Manual installation
+## Manual installation (developers)
 
-Use this only if you are not running Docker. You will need `git`, an HTTP
-server, and **PHP** (required by the semi-automatic registration tool), and you
-must build MicMac yourself from
-[`VCityTeam/micmac4agape`](https://github.com/VCityTeam/micmac4agape).
+This section is the **second, alternative setup**. You do not need it if the
+[Quick start](#quick-start-docker) worked for you — it covers the same
+application, installed by hand. Use it if you want to develop against a local
+PHP and MicMac installation, or if you cannot run Docker.
+
+### Prerequisites
+
+| Tool | What it is | Install |
+| --- | --- | --- |
+| **Git** | Downloads this repository and its submodules | [git-scm.com/downloads](https://git-scm.com/downloads) |
+| **PHP** | Runs the semi-automatic registration tool (`globe.html`) | [php.net/downloads](https://www.php.net/downloads) |
+| **An HTTP server** | Serves the pages — Apache, nginx, or PHP's [built-in server](https://www.php.net/manual/en/features.commandline.webserver.php) | see your server's documentation |
+| **MicMac** | Photogrammetry engine, built from source | [`VCityTeam/micmac4agape`](https://github.com/VCityTeam/micmac4agape) |
 
 ### 1. Clone the repository
 
