@@ -102,7 +102,7 @@ speed that up or to change what gets built.
 Clicking **Lyon — globe** opens the semi-automatic registration tool centred on
 Lyon:
 
-![The globe view of Lyon, showing extruded BDTopo buildings over IGN aerial imagery](docs/Screenshot-Itowns-Globe-Lyon.png)
+![The globe view of Lyon, showing extruded BDTopo buildings over IGN aerial imagery](docs/Screenshot-Itowns-Globe-Lyon2.png)
 
 The view is a 3D globe: IGN aerial imagery draped over the terrain, with the
 white extruded buildings of the IGN **BDTopo** database on top. The screenshot
