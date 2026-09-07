@@ -57,7 +57,7 @@
                 label: 'Lyon',
                 dataPath: '../data/',
                 outputPath: '../outputs/test/',
-                enableBuildings: false,
+                enableBuildings: true,
                 positionOnGlobe: { longitude: 4.835659, latitude: 45.764043, altitude: 1878.615379151888 },
                 zones: {
                     default: {
