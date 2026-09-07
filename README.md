@@ -1,5 +1,11 @@
 # alegoria4agape
 
+<p align="center">
+  <img src="docs/logo_AGAPE-white.png" alt="AGAPE project logo" height="140">
+  <br><br>
+  <img src="data/logoAlegoria.jpg" alt="Alegoria project logo" height="45">
+</p>
+
 This repository supports the **AGAPE** project and is based on the previous
 **Alegoria** project from [`itownsResearch/alegoria`](https://github.com/itownsResearch/alegoria).
 The name **alegoria4agape** reflects that relationship: this project makes use
@@ -118,8 +124,7 @@ The bar along the bottom is the registration toolbar:
 | `Alt+click 3D point, Shift+click image point` | A reminder of the two picking gestures, not a button |
 | **Go** | Run the MicMac resection with the points picked so far |
 
-The uploaded photograph appears in the small panel at the top right, above the
-Alegoria logo. Registration itself is described in
+Registration itself is described in
 [`docs/saisie-visualisation.fr.md`](docs/saisie-visualisation.fr.md).
 
 ## Navigating the 3D view
