@@ -69,8 +69,8 @@ function getImgCoordOnClick(event){
      //   miniDiv.appendChild(point);
      //  miniDiv.insertBefore(point, img);
         //get center of the cross
-        point.style.left = cursor_x - point.offsetWidth / 2; // + "px";
-        point.style.top =  cursor_y - point.offsetHeight / 2;// + "px";
+        point.style.left = (cursor_x - point.offsetWidth / 2) + "px";
+        point.style.top =  (cursor_y - point.offsetHeight / 2) + "px";
         point.style.visibility = "visible" ;
         //display coordinates in the console
         console.log("X: " + pos_x + " Y: " + pos_y);

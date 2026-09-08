@@ -1,3 +1,8 @@
 # Local runtime content under data/ and outputs/.
 data/
 outputs/
+
+# Dependencies, and the iTowns bundles vendored out of them by
+# `npm install` (scripts/vendor-itowns.mjs).
+node_modules/
+vendor/

@@ -1,0 +1,14 @@
+{
+  "name": "alegoria4agape",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Semi-automatic registration and visualisation of historical images, on the latest iTowns release.",
+  "license": "MIT",
+  "scripts": {
+    "vendor:itowns": "node scripts/vendor-itowns.mjs",
+    "postinstall": "node scripts/vendor-itowns.mjs"
+  },
+  "dependencies": {
+    "itowns": "2.46.0"
+  }
+}

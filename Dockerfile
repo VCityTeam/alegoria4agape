@@ -2,6 +2,7 @@ FROM ubuntu:20.04 AS alegoria-source
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG ALEGORIA_REPOSITORY=https://github.com/VCityTeam/alegoria4agape.git
+ARG ALEGORIA_BRANCH=latest-itowns
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -11,7 +12,22 @@ RUN apt-get update \
 
 WORKDIR /opt/src
 
-RUN git clone --recursive "${ALEGORIA_REPOSITORY}" alegoria4agape
+RUN git clone --branch "${ALEGORIA_BRANCH}" "${ALEGORIA_REPOSITORY}" alegoria4agape
+
+
+FROM node:22-bookworm-slim AS itowns-vendor
+
+# The iTowns release served to the browser. Bump this to move to a newer
+# upstream release; nothing else in the project pins an iTowns version.
+ARG ITOWNS_VERSION=2.46.0
+
+WORKDIR /opt/itowns
+
+COPY package.json package-lock.json ./
+COPY scripts ./scripts
+
+RUN npm install --no-audit --no-fund "itowns@${ITOWNS_VERSION}" \
+    && node scripts/vendor-itowns.mjs
 
 
 FROM ubuntu:20.04 AS micmac-builder
@@ -66,6 +82,7 @@ COPY --from=micmac-builder /opt/src/micmac4agape/include/ ${MICMAC_HOME}/include
 COPY --from=micmac-builder /opt/src/micmac4agape/lib/ ${MICMAC_HOME}/lib/
 
 COPY --from=alegoria-source /opt/src/alegoria4agape/ /var/www/html/alegoria4agape/
+COPY --from=itowns-vendor /opt/itowns/vendor/itowns/ /var/www/html/alegoria4agape/vendor/itowns/
 
 RUN { \
         echo 'file_uploads = On'; \

@@ -2,9 +2,7 @@
 .agents
 .codex
 node_modules
-itowns-photogrammetric-camera/.git
-itowns-photogrammetric-camera/node_modules
-itowns-photogrammetric-camera/build
+vendor
 
 *.log
 .DS_Store

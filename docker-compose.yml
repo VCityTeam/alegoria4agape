@@ -1,3 +1,10 @@
+# alegoria4agape on the latest iTowns release.
+#
+#   docker compose up --build
+#
+# The iTowns bundle served to the browser is the npm release pinned by
+# ITOWNS_VERSION (see package.json and Dockerfile); there is no iTowns
+# submodule and no iTowns build step.
 services:
   alegoria4agape:
     build:
@@ -5,6 +12,8 @@ services:
       dockerfile: Dockerfile
       args:
         ALEGORIA_REPOSITORY: https://github.com/VCityTeam/alegoria4agape.git
+        ALEGORIA_BRANCH: latest-itowns
+        ITOWNS_VERSION: ${ITOWNS_VERSION:-2.46.0}
         MICMAC_REPOSITORY: https://github.com/VCityTeam/micmac4agape.git
         MICMAC_BUILD_PARALLEL: 4
     image: alegoria4agape:local

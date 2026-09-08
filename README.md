@@ -16,6 +16,24 @@ visualisation.
 
 ![alt text](https://raw.githubusercontent.com/itownsResearch/docs/master/oldProj2.gif "Alegoria")
 
+## Branches
+
+| Branch | Purpose |
+| --- | --- |
+| `master` | Stable classic viewer, on the iTowns build bundled in the `itowns-photogrammetric-camera` submodule. Changes there are kept conservative. |
+| `classic-itowns` | The classic viewer; kept in sync with `master` / `origin/master`. |
+| `latest-itowns` | **This branch.** The viewer on the latest upstream iTowns release, and nothing else. |
+
+This branch runs **only** on the upstream iTowns release pinned in
+`package.json`. It carries no iTowns submodule, no bundled iTowns build and no
+classic code path: the viewer logic lives in `src/latest_itowns_viewer.js`, the
+projective texturing of the registered photographs in
+`src/projective_texture_material.js`, and both are written against the public
+iTowns API. The classic viewer stays available on `master` and
+`classic-itowns`.
+
+New development targets `latest-itowns`.
+
 ## Which setup should I choose?
 
 There are two ways to install alegoria4agape. Pick one:
@@ -23,7 +41,7 @@ There are two ways to install alegoria4agape. Pick one:
 | | [Quick start (Docker)](#quick-start-docker) | [Manual installation (developers)](#manual-installation-developers) |
 | --- | --- | --- |
 | **For whom** | Everyone — first-time users, anyone who just wants to see the tools running | Developers who want to work on the code, or who cannot run Docker |
-| **You install** | [Docker](https://www.docker.com/) and [Git](https://git-scm.com/) | Git, an HTTP server, [PHP](https://www.php.net/), and MicMac built from source |
+| **You install** | [Docker](https://www.docker.com/) and [Git](https://git-scm.com/) | Git, [Node.js](https://nodejs.org/), an HTTP server, [PHP](https://www.php.net/), and MicMac built from source |
 | **MicMac** | Built and configured for you | You build and configure it yourself |
 | **Effort** | Two commands, then wait for the first build | Several manual steps |
 
@@ -37,7 +55,7 @@ You need two tools installed before you begin.
 
 | Tool | What it is | Install |
 | --- | --- | --- |
-| **Git** | Version control tool, used to download this repository and its submodules | [git-scm.com/downloads](https://git-scm.com/downloads) |
+| **Git** | Version control tool, used to download this repository | [git-scm.com/downloads](https://git-scm.com/downloads) |
 | **Docker** | Runs the application in a preconfigured container, so you do not have to install PHP, Apache or MicMac yourself | See the table below |
 
 Which Docker to install:
@@ -79,7 +97,7 @@ If both commands print a version, you are ready.
 ### Install and run
 
 ```
-git clone --recursive https://github.com/VCityTeam/alegoria4agape
+git clone --branch latest-itowns https://github.com/VCityTeam/alegoria4agape
 cd alegoria4agape
 docker compose up --build
 ```
@@ -93,9 +111,10 @@ Then open:
 | Lyon — oriented images | http://localhost:8080/alegoria4agape/src/lyon/oriented_images.html |
 | Lyon — globe | http://localhost:8080/alegoria4agape/src/lyon/globe.html |
 
-That's it — MicMac is built and configured for you. The first build compiles it
-from source and takes a while; see [Docker in detail](#docker-in-detail) to
-speed that up or to change what gets built.
+That's it — MicMac is built and configured for you, and iTowns is downloaded
+from npm. The first build compiles MicMac from source and takes a while; see
+[Docker in detail](#docker-in-detail) to speed that up or to change what gets
+built.
 
 ## What you should see
 
@@ -232,16 +251,18 @@ application.
 
 The Dockerfile uses a multi-stage build:
 
-1. Clone `VCityTeam/alegoria4agape` recursively, including the iTowns submodule.
-2. Clone and compile `VCityTeam/micmac4agape`.
-3. Copy both into a PHP/Apache runtime image.
-4. Configure PHP for image uploads and long-running MicMac requests.
+1. Clone the `latest-itowns` branch of `VCityTeam/alegoria4agape`.
+2. Install the pinned iTowns release from npm and vendor its browser bundles
+   into `vendor/itowns/` (see [The iTowns bundle](#the-itowns-bundle)).
+3. Clone and compile `VCityTeam/micmac4agape`.
+4. Copy all three into a PHP/Apache runtime image.
+5. Configure PHP for image uploads and long-running MicMac requests.
 
 ### Where the source comes from
 
 The application source is not copied from your local checkout during the image
-build. Docker fetches it from `ALEGORIA_REPOSITORY` with `git clone
---recursive`, and MicMac from `MICMAC_REPOSITORY`.
+build. Docker fetches it from `ALEGORIA_REPOSITORY` at `ALEGORIA_BRANCH`,
+MicMac from `MICMAC_REPOSITORY`, and iTowns from npm at `ITOWNS_VERSION`.
 
 At **runtime**, however, `docker-compose.yml` bind-mounts your local `./src`
 over the copy in the image. Edits to `src/` therefore take effect on a browser
@@ -267,6 +288,8 @@ The default build uses:
 
 ```
 ALEGORIA_REPOSITORY=https://github.com/VCityTeam/alegoria4agape.git
+ALEGORIA_BRANCH=latest-itowns
+ITOWNS_VERSION=2.46.0
 MICMAC_REPOSITORY=https://github.com/VCityTeam/micmac4agape.git
 MICMAC_BUILD_PARALLEL=4
 ```
@@ -278,9 +301,13 @@ the arguments in `docker-compose.yml` or by overriding them manually:
 ```
 docker compose build \
   --build-arg ALEGORIA_REPOSITORY=https://github.com/VCityTeam/alegoria4agape.git \
+  --build-arg ITOWNS_VERSION=2.46.0 \
   --build-arg MICMAC_REPOSITORY=https://github.com/VCityTeam/micmac4agape.git \
   --build-arg MICMAC_BUILD_PARALLEL=4
 ```
+
+`ITOWNS_VERSION` is the one you are most likely to change on this branch; see
+[The iTowns bundle](#the-itowns-bundle).
 
 ## Manual installation (developers)
 
@@ -293,33 +320,38 @@ PHP and MicMac installation, or if you cannot run Docker.
 
 | Tool | What it is | Install |
 | --- | --- | --- |
-| **Git** | Downloads this repository and its submodules | [git-scm.com/downloads](https://git-scm.com/downloads) |
+| **Git** | Downloads this repository | [git-scm.com/downloads](https://git-scm.com/downloads) |
+| **Node.js** (18+) | Downloads the pinned iTowns release with `npm` | [nodejs.org](https://nodejs.org/) |
 | **PHP** | Runs the semi-automatic registration tool (`globe.html`) | [php.net/downloads](https://www.php.net/downloads) |
 | **An HTTP server** | Serves the pages — Apache, nginx, or PHP's [built-in server](https://www.php.net/manual/en/features.commandline.webserver.php) | see your server's documentation |
 | **MicMac** | Photogrammetry engine, built from source | [`VCityTeam/micmac4agape`](https://github.com/VCityTeam/micmac4agape) |
 
 ### 1. Clone the repository
 
-The alegoria4agape Web Tools use iTowns as a submodule
-([`itowns-photogrammetric-camera`](https://github.com/VCityTeam/itowns-photogrammetric-camera4agape)),
-so clone recursively to get the sources and the builts:
-
 ```
-git clone --recursive https://github.com/VCityTeam/alegoria4agape
+git clone --branch latest-itowns https://github.com/VCityTeam/alegoria4agape
+cd alegoria4agape
 ```
 
-If you cloned without `--recursive`, fetch the submodule afterwards:
+There are no submodules on this branch.
+
+### 2. Install iTowns
 
 ```
-git submodule update --init --recursive
+npm install
 ```
 
-### 2. Serve the files
+This downloads the iTowns release pinned in `package.json` and copies its
+browser bundles into `vendor/itowns/`, which is where the pages load iTowns
+from. `vendor/` and `node_modules/` are ignored by git, so this step is needed
+once per clone, and again after changing the pinned version.
+
+### 3. Serve the files
 
 Launch your favorite http-server from the **parent directory of the clone**, not
 from the clone itself — the URLs below include the `/alegoria4agape/` prefix.
 
-### 3. Open the application
+### 4. Open the application
 
 Replace `localhost` with the host and port your server uses.
 
@@ -330,7 +362,7 @@ Replace `localhost` with the host and port your server uses.
 | Lyon — oriented images | http://localhost/alegoria4agape/src/lyon/oriented_images.html |
 | Lyon — globe | http://localhost/alegoria4agape/src/lyon/globe.html |
 
-### 4. Configure MicMac for globe.html
+### 5. Configure MicMac for globe.html
 
 - On Linux, beware that in order to create the different files (ground point etc) you will need to specify write authorization. You can set an authorization recursive for the all alegoria directory like chmod -R 777 alegoria/
 - Check the launchMicMac.php to verify that it can find micmac4agape and your images (micmac inputs around line 47). You might add a path to micmac4agape bin like this at the beginning of the function terminal
@@ -338,6 +370,42 @@ Replace `localhost` with the host and port your server uses.
     //add MicMac to global Path
     $path = '/home/myusername/micmac4agape/bin';
     putenv('PATH=' . getenv('PATH') . PATH_SEPARATOR . $path);
+
+## The iTowns bundle
+
+This branch does not build iTowns, and does not carry a copy of it. The pages
+load a released upstream build:
+
+| | |
+| --- | --- |
+| **Version** | pinned by `itowns` in `package.json` (and `ITOWNS_VERSION` in the Dockerfile) |
+| **Where it comes from** | the `itowns` package on npm |
+| **Where it is served from** | `vendor/itowns/itowns.umd.js`, produced by `scripts/vendor-itowns.mjs` |
+| **In Docker** | vendored during the image build; `vendor/` is not in git |
+| **Manually** | `npm install`, which runs the same script |
+
+### Moving to another iTowns version
+
+Change the version in `package.json` and re-run `npm install`, or pass it to
+Docker for a one-off test:
+
+```
+ITOWNS_VERSION=2.46.0 docker compose up --build
+```
+
+### What the application uses from iTowns
+
+The viewer is written against the public iTowns API only — `GlobeView`,
+`WMTSSource`, `WFSSource`, `Feature2Mesh`, `FeatureProcessing`, `Coordinates`
+and the `THREE` build that iTowns re-exports. The layer definitions are
+app-owned and live in `src/config/layers/JSONLayers/`.
+
+Upstream iTowns keeps its `OrientedImageMaterial` internal and does not ship
+the MicMac camera classes of the `three-photogrammetric-camera` fork, so the
+projective texturing of a registered photograph onto the BDTopo buildings is
+implemented in this repository, in `src/projective_texture_material.js`. It
+uses nothing but `itowns.THREE` and the MicMac calibration parsed from the
+`Calib-*.xml` file, which keeps the viewer free of any fork-specific build.
 
 ## City, quartier, and zone configuration
 
